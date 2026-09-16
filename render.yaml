@@ -4,37 +4,33 @@
 # The app needs a LONG-LIVED, STATEFUL process - it holds persistent WebSocket
 # connections and writes to a SQLite file. Serverless/edge platforms run
 # ephemeral, stateless instances and cannot hold an open WebSocket or a writable
-# DB file, so they are unsuitable. Render runs persistent containers and supports
-# WebSocket upgrades. (Requirement 15.9)
+# DB file. Render runs persistent containers and supports WebSocket upgrades.
 #
 # ------------------------------------------------------------------------------
-# TOPOLOGY: two web services, the FRONTEND is the public URL
+# TOPOLOGY: two web services; the frontend calls the backend DIRECTLY
 # ------------------------------------------------------------------------------
-# - backend  : Docker web service running Fastify + SQLite + the WebSocket
-#              server. Binds 0.0.0.0 on PORT (see backend/src/server.ts). It is
-#              reachable from the frontend over Render's private network at
-#              http://trade-blotter-backend:3000. (Requirement 15.10)
-# - frontend : Docker web service (nginx) that serves the built SPA and
-#              reverse-proxies /api and /ws to the backend's INTERNAL address.
-#              This is the URL people visit; everything is same-origin, so there
-#              is no CORS and the SPA needs no rebuild (config/env.ts resolves
-#              /api/v1 and ws(s)://<host>/ws at runtime). (Requirements 15.7, 15.8)
+# On Render, web services are NOT reachable from each other by bare service name
+# (that only works on Docker Compose's local network / for Render private
+# services). So instead of proxying, the static SPA calls the backend's PUBLIC
+# URL directly, using the backend's CORS. The backend URL is baked into the Vite
+# build via build args (VITE_API_BASE_URL / VITE_WS_URL), which config/env.ts
+# reads. This removes the nginx upstream-resolution / SNI / double-proxy issues.
 #
-# The frontend nginx upstream is parametrised via BACKEND_ORIGIN (envsubst in the
-# nginx image). Locally (Docker Compose) it defaults to http://backend:3000; here
-# it is set to the backend's internal Render URL.
+# IMPORTANT: after the FIRST deploy, set the frontend build args below to the
+# backend's actual public URL (Render assigns it, e.g.
+# https://trade-blotter-backend-XXXX.onrender.com), then redeploy the frontend.
+# The values below are the known backend URL from the initial deploy.
 #
-# PERSISTENCE (Requirement 15.11): a 1GB disk is mounted at /data and
-# DB_PATH=/data/trades.db, so trades survive restarts/redeploys. Remove the disk
-# block for the ephemeral fallback - the app re-seeds 500 trades on empty
-# startup, but user-created trades then do not survive a restart. (Req 15.12)
+# PERSISTENCE: a 1GB disk is mounted at /data (DB_PATH=/data/trades.db) so trades
+# survive restarts/redeploys. Remove the disk block for an ephemeral fallback -
+# the app re-seeds 500 trades on empty startup.
 
 services:
-  # ---- Backend: Fastify + SQLite + WebSocket (private, reached by the frontend)
+  # ---- Backend: Fastify + SQLite + WebSocket (public API + WS) ---------------
   - type: web
     name: trade-blotter-backend
     env: docker
-    plan: starter                 # smallest paid plan that allows a persistent disk
+    plan: starter
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     healthCheckPath: /api/v1/trades
@@ -45,8 +41,8 @@ services:
         value: 3000
       - key: DB_PATH
         value: /data/trades.db
-      # Same-origin via the frontend proxy, so CORS is not exercised by the SPA.
-      # Left permissive for any direct API access.
+      # The SPA calls the backend cross-origin, so CORS must allow it. '*' is
+      # fine for a demo; set to the frontend's public URL to lock it down.
       - key: CORS_ORIGIN
         value: "*"
     disk:
@@ -54,7 +50,7 @@ services:
       mountPath: /data
       sizeGB: 1
 
-  # ---- Frontend: nginx serving the SPA + proxying /api and /ws (PUBLIC URL) ----
+  # ---- Frontend: static SPA (nginx) that calls the backend's public URL ------
   - type: web
     name: trade-blotter-frontend
     env: docker
@@ -62,8 +58,9 @@ services:
     dockerfilePath: ./frontend/Dockerfile
     dockerContext: ./frontend
     envVars:
-      # Point nginx at the backend's INTERNAL Render address. Service-to-service
-      # traffic resolves by service name on Render's private network. If your
-      # backend listens on a different port, match it here.
-      - key: BACKEND_ORIGIN
-        value: http://trade-blotter-backend:3000
+      # Baked into the Vite build (build-time). Point these at the backend's
+      # PUBLIC URL. Update if Render assigns the backend a different host.
+      - key: VITE_API_BASE_URL
+        value: https://trade-blotter-backend-02lg.onrender.com/api/v1
+      - key: VITE_WS_URL
+        value: wss://trade-blotter-backend-02lg.onrender.com/ws

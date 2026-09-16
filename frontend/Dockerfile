@@ -13,6 +13,14 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
+# Optional build-time API/WebSocket URLs. Unset -> the SPA uses same-origin
+# defaults (/api/v1 and ws(s)://<host>/ws). On Render these are set to the
+# backend's public URL so the static SPA talks to it directly (no proxy).
+ARG VITE_API_BASE_URL=""
+ARG VITE_WS_URL=""
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_WS_URL=$VITE_WS_URL
+
 # Copy the rest of the source and produce the static bundle in /app/dist.
 COPY . .
 RUN npm run build
@@ -22,10 +30,5 @@ RUN npm run build
 # /api and /ws to the backend so the SPA is served same-origin.
 FROM nginx:alpine AS runner
 COPY --from=builder /app/dist /usr/share/nginx/html
-# Env-substituted nginx template: BACKEND_ORIGIN defaults to the Compose
-# service (http://backend:3000) and is overridden on Render via env.
-COPY nginx.conf.template /etc/nginx/templates/default.conf.template
-ENV BACKEND_ORIGIN=http://backend:3000
-# Limit envsubst to BACKEND_ORIGIN so nginx's own $variables are preserved.
-ENV NGINX_ENVSUBST_FILTER=BACKEND_ORIGIN
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
