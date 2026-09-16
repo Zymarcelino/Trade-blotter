@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Validate Test Coverage",
+      "description": "On save of a source file with behaviour, verify a co-located test exists and covers the happy path, error paths, and (where the input space is large) a tagged property-based test.",
+      "trigger": "PostFileSave",
+      "matcher": "(backend/src/.*[^/]*\\.ts$|frontend/src/.*[^/]*\\.ts$|frontend/src/.*[^/]*\\.tsx$)",
+      "action": {
+        "type": "agent",
+        "prompt": "A source file was just saved. Assess its TEST coverage against the tdd and test-coverage steering. Steps:\n1. If the saved file is itself a test (*.test.ts / *.test.tsx), a type-only module (pure interfaces/types), or a trivial presentational-only component, reply that no test is required and stop.\n2. Otherwise locate the co-located test (foo.ts -> foo.test.ts, Foo.tsx -> Foo.test.tsx). If it is MISSING, flag it and outline the specific test cases that should exist.\n3. If it exists, check it tests observable behaviour at the right boundary (service vs mocked repo; repository vs in-memory SQLite; routes via Fastify inject; hooks/store as units; components via RTL; network via MSW) and that it covers the ERROR paths (404/409/400, network failure, parse failure, no-mutation-on-failure), not just the happy path.\n4. If the file has a large input space (id generation, diffing, row mapping, pagination, filtering, validation, aggregation/P&L), verify there is a fast-check property test with >=100 runs, tagged exactly `// Feature: trade-blotter, Property N: <text>`.\n5. Run the affected test file(s) with `npx vitest run <path>` and confirm green.\nReport a short PASS/FAIL summary with concrete gaps. Do not add tests unless asked; just report."
+      },
+      "enabled": true
+    }
+  ]
+}

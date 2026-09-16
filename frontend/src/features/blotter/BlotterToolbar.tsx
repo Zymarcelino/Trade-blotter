@@ -6,9 +6,13 @@
  * surfaces values and reports changes back up. It holds no filtering or
  * aggregation logic of its own.
  *
- * Layout (reference-aligned UX):
- *  - A control row: debounced global search, a Filter toggle showing the
- *    active-filter count, the page-size selector, and Create Trade.
+ * Layout (reference-aligned, compact density):
+ *  - A single control row: a left-aligned "{filtered} / {total}" row count, the
+ *    debounced global search, a Filter toggle showing the active-filter count,
+ *    the Newest/Oldest time-order toggle, and a Refresh affordance. The rest of
+ *    the controls (page-size selector, stream-pacing dials, Pause, Create Trade,
+ *    Add Random Trades) are tucked to the right and wrap to a second line on
+ *    narrow widths. No control is removed and none change their wiring.
  *  - A collapsible inline filter bar (NOT a drawer) with the per-column
  *    dropdowns and a Clear control; hidden by default.
  *
@@ -43,8 +47,13 @@ const GLOBAL_FILTER_DEBOUNCE_MS = 400;
 /** Page-size options offered by the blotter (rows per page). */
 export const PAGE_SIZE_OPTIONS = [50, 100, 250, 500] as const;
 
-/** The set of columns exposed as dropdown filters. */
-export type FilterableColumn = 'symbol' | 'side' | 'status' | 'trader';
+/**
+ * The set of columns exposed as dropdown filters. Each value maps 1:1 to a
+ * real table column id whose `filterFn` is `equalsString`. (A `trader` column
+ * once existed here but the Trader column was removed from the grid, so its
+ * filter did nothing; only columns that exist on the table are filterable.)
+ */
+export type FilterableColumn = 'symbol' | 'side' | 'status';
 
 /** Current value of each per-column filter (`''` means "no filter"). */
 export type ColumnFilterValues = Readonly<Record<FilterableColumn, string>>;
@@ -54,7 +63,6 @@ export interface BlotterFilterOptions {
   readonly symbols: readonly string[];
   readonly sides: readonly string[];
   readonly statuses: readonly string[];
-  readonly traders: readonly string[];
 }
 
 /** Props for {@link BlotterToolbar}. */
@@ -95,6 +103,14 @@ export interface BlotterToolbarProps {
   readonly streamPaused: boolean;
   /** Toggles the paused state. */
   readonly onStreamPausedToggle: () => void;
+  /** Number of rows matching the current filters (defaults to `totalCount`). */
+  readonly filteredCount?: number;
+  /** Total number of loaded trades (shown in the "{n} / {total}" count). */
+  readonly totalCount?: number;
+  /** Re-runs the initial trade load (Refresh affordance); omit to hide it. */
+  readonly onRefresh?: () => void;
+  /** Whether a refresh/refetch is currently in flight (disables the control). */
+  readonly isRefreshing?: boolean;
 }
 
 export function BlotterToolbar({
@@ -116,6 +132,10 @@ export function BlotterToolbar({
   onStreamIntervalChange,
   streamPaused,
   onStreamPausedToggle,
+  filteredCount,
+  totalCount,
+  onRefresh,
+  isRefreshing = false,
 }: BlotterToolbarProps): React.JSX.Element {
   // Local, immediate mirror of the text input so typing feels instant; the
   // debounced value is what we report upstream.
@@ -149,11 +169,25 @@ export function BlotterToolbar({
     (v) => v !== '',
   ).length;
 
+  // Row count shown on the left of the toolbar. When the parent supplies both
+  // counts we show "{filtered} / {total}"; otherwise nothing is rendered.
+  const showCount = totalCount !== undefined;
+  const shownFiltered = filteredCount ?? totalCount ?? 0;
+
   return (
     <div className={styles.toolbar}>
       {/* Control row (desk stats live in the app top bar to avoid duplication) */}
       <div className={styles.controls}>
-        <div className={styles.field}>
+        {showCount && (
+          <span className={styles.count} aria-live="polite">
+            <span className={styles.countValue}>{shownFiltered}</span>
+            <span className={styles.countSep}>/</span>
+            <span className={styles.countTotal}>{totalCount}</span>
+            <span className={styles.countLabel}>trades</span>
+          </span>
+        )}
+
+        <div className={`${styles.field} ${styles.searchField}`}>
           <label htmlFor="blotter-global-filter">Search trades</label>
           <input
             id="blotter-global-filter"
@@ -193,7 +227,21 @@ export function BlotterToolbar({
           {timeSortDir === 'desc' ? '\u25BC Newest' : '\u25B2 Oldest'}
         </button>
 
-        <div className={styles.field}>
+        {onRefresh && (
+          <button
+            type="button"
+            className={styles.refreshButton}
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            aria-label="Refresh trades"
+            title="Refresh trades"
+          >
+            {'\u21BB'} {isRefreshing ? 'Refreshing' : 'Refresh'}
+          </button>
+        )}
+
+        {/* Secondary controls: tucked to the right, wrap on narrow widths. */}
+        <div className={`${styles.field} ${styles.secondaryStart}`}>
           <label htmlFor="blotter-page-size">Rows per page</label>
           <select
             id="blotter-page-size"
@@ -298,14 +346,6 @@ export function BlotterToolbar({
             column="status"
             value={columnFilters.status}
             options={options.statuses}
-            onChange={onColumnFilterChange}
-          />
-          <ColumnFilter
-            id="blotter-filter-trader"
-            label="Trader"
-            column="trader"
-            value={columnFilters.trader}
-            options={options.traders}
             onChange={onColumnFilterChange}
           />
           <button

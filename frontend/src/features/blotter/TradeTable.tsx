@@ -158,7 +158,6 @@ const EMPTY_COLUMN_FILTERS: ColumnFilterValues = {
   symbol: '',
   side: '',
   status: '',
-  trader: '',
 };
 
 /** Derives the distinct sorted option list for a string field of the trades. */
@@ -200,7 +199,8 @@ export function TradeTable({
   // nor refetches over the streamed store.
   const injectedQuery = useTradesHook();
   useTradeSocketHook();
-  const { isLoading, isError, refetch } = tradesQuery ?? injectedQuery;
+  const { isLoading, isFetching, isError, refetch } =
+    tradesQuery ?? injectedQuery;
 
   // --- Filter / sort / pagination state (preserved across WS updates) -------
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -296,7 +296,6 @@ export function TradeTable({
       symbols: distinctValues(trades, 'symbol'),
       sides: distinctValues(trades, 'side'),
       statuses: distinctValues(trades, 'status'),
-      traders: distinctValues(trades, 'trader'),
     }),
     [trades],
   );
@@ -443,6 +442,10 @@ export function TradeTable({
         onStreamIntervalChange={setStreamIntervalMs}
         streamPaused={streamPaused}
         onStreamPausedToggle={() => setStreamPaused(!streamPaused)}
+        filteredCount={filteredCount}
+        totalCount={stats.totalCount}
+        onRefresh={refetch}
+        isRefreshing={isFetching}
       />
 
       {isError && (

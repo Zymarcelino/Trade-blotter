@@ -10,52 +10,172 @@
 .topBar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 1rem;
-  padding: 0.75rem 1.25rem;
+  padding: 0.625rem 1.25rem;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 .brand {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.75rem;
   min-width: 0;
+}
+
+/* Connection status dot: colour is paired with the text badge beside it. */
+.statusDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.statusDotLive {
+  background: var(--buy);
+  box-shadow: 0 0 6px var(--buy);
+}
+
+.statusDotDown {
+  background: var(--sell);
+  box-shadow: 0 0 6px var(--sell);
 }
 
 .title {
   margin: 0;
   font-family: var(--font-mono);
   font-size: 0.8125rem;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   font-weight: 600;
   color: var(--text);
+  white-space: nowrap;
 }
 
-.tagline {
+.connBadge {
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.05em;
-  color: var(--text-dim);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.25rem;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.connBadgeLive {
+  color: var(--buy);
+  border-color: rgba(0, 230, 118, 0.35);
+  background: rgba(0, 230, 118, 0.1);
+}
+
+.connBadgeDown {
+  color: var(--sell);
+  border-color: rgba(255, 69, 96, 0.35);
+  background: rgba(255, 69, 96, 0.1);
+}
+
+.divider {
+  width: 1px;
+  height: 1rem;
+  background: var(--border);
+  flex-shrink: 0;
 }
 
 .stats {
   display: inline-flex;
   align-items: center;
-  gap: 1.5rem;
-  font-size: 0.6875rem;
+  gap: 1.25rem;
+  flex-shrink: 0;
+}
+
+.stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.statLabel {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-dim);
 }
 
 .statValue {
   font-family: var(--font-mono);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: var(--text);
+}
+
+.statValueActive {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--buy);
+}
+
+.statValueNotional {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--accent);
+}
+
+/* Live price ticker: fills the middle, clips horizontally rather than wrapping. */
+.ticker {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-left: auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tickerItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.tickerSymbol {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--text-dim);
+}
+
+.tickerPrice {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--text);
+}
+
+.newTradeButton {
+  flex-shrink: 0;
+  padding: 0.45rem 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--accent);
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.newTradeButton:hover {
+  filter: brightness(1.1);
+}
+
+.newTradeButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .tabs {
@@ -64,6 +184,7 @@
   padding: 0 1.25rem;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 .tab {

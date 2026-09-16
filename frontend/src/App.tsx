@@ -7,9 +7,12 @@
  *  - Own the app-lifetime concerns: the live WebSocket via {@link useTradeSocket}
  *    and the initial trade load via {@link useTrades}. Both live here (not inside
  *    a tab) so switching tabs never disconnects the feed or refetches.
- *  - Render the top bar (title + desk stats), the view switcher tabs
- *    (Blotter | Positions / P&L | Audit Trail), the persistent connection
- *    banner, and the always-mounted toast stack.
+ *  - Render the top bar (title + live connection dot + desk stats + live price
+ *    ticker + New Trade), the view switcher tabs (Blotter | Positions / P&L |
+ *    Audit Trail), and the always-mounted toast stack. The connection state is
+ *    folded into the top-bar status dot (colour AND text) rather than a
+ *    full-width banner; the {@link ConnectionStatusBanner} component is retained
+ *    but no longer rendered here.
  *  - Coordinate the create/amend/cancel modals and the audit side panel.
  *
  * The socket and the trades query are hosted in an inner AppShell so they mount
@@ -22,7 +25,6 @@ import { useMemo, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { ConnectionStatusBanner } from './components/ConnectionStatusBanner';
 import { ToastContainer } from './components/ToastContainer';
 import { TradeTable } from './features/blotter/TradeTable';
 import { CancelConfirmDialog } from './features/blotter/CancelConfirmDialog';
@@ -85,6 +87,8 @@ function AppShell(): React.JSX.Element {
   const tradesQuery = useTrades();
 
   const trades = useTradeStore((s) => s.trades);
+  const isConnected = useTradeStore((s) => s.isConnected);
+  const marketPrices = useTradeStore((s) => s.marketPrices);
 
   const [view, setView] = useState<View>(View.BLOTTER);
 
@@ -99,16 +103,26 @@ function AppShell(): React.JSX.Element {
     onSuccess: () => setCancelTarget(null),
   });
 
-  // Desk stats for the top bar, derived from the live store.
+  // Desk stats for the top bar, derived from the live store. Active trades
+  // (status !== CANCELLED) drive both the active count and the notional total
+  // (sum of price * quantity over active trades).
   const stats = useMemo(() => {
     let active = 0;
+    let notional = 0;
     for (const trade of trades) {
       if (trade.status !== TradeStatus.CANCELLED) {
         active += 1;
+        notional += trade.price * trade.quantity;
       }
     }
-    return { total: trades.length, active };
+    return { total: trades.length, active, notional };
   }, [trades]);
+
+  // Up to 8 live prices for the top-bar ticker (order follows the store map).
+  const tickerPrices = useMemo(
+    () => Object.entries(marketPrices).slice(0, 8),
+    [marketPrices],
+  );
 
   const tabs: ReadonlyArray<{ readonly id: View; readonly label: string }> = [
     { id: View.BLOTTER, label: 'Blotter' },
@@ -118,21 +132,62 @@ function AppShell(): React.JSX.Element {
 
   return (
     <div className={styles.shell}>
-      <ConnectionStatusBanner />
-
       <header className={styles.topBar}>
         <div className={styles.brand}>
+          {/* Connection state: colour AND text so colour is never the only cue. */}
+          <span
+            className={`${styles.statusDot} ${
+              isConnected ? styles.statusDotLive : styles.statusDotDown
+            }`}
+            aria-hidden="true"
+          />
           <h1 className={styles.title}>Trade Blotter</h1>
-          <span className={styles.tagline}>Real-time trading desk</span>
+          <span
+            className={`${styles.connBadge} ${
+              isConnected ? styles.connBadgeLive : styles.connBadgeDown
+            }`}
+            role="status"
+            aria-live="polite"
+          >
+            {isConnected ? 'LIVE' : 'Disconnected'}
+          </span>
         </div>
+
+        <span className={styles.divider} aria-hidden="true" />
+
         <div className={styles.stats}>
-          <span>
-            Total <span className={styles.statValue}>{stats.total}</span>
+          <span className={styles.stat}>
+            <span className={styles.statLabel}>Active</span>
+            <span className={styles.statValueActive}>{stats.active}</span>
           </span>
-          <span>
-            Active <span className={styles.statValue}>{stats.active}</span>
+          <span className={styles.stat}>
+            <span className={styles.statLabel}>Total</span>
+            <span className={styles.statValue}>{stats.total}</span>
+          </span>
+          <span className={styles.stat}>
+            <span className={styles.statLabel}>Notional</span>
+            <span className={styles.statValueNotional}>
+              ${(stats.notional / 1_000_000).toFixed(1)}M
+            </span>
           </span>
         </div>
+
+        <div className={styles.ticker} aria-label="Live prices">
+          {tickerPrices.map(([symbol, price]) => (
+            <span key={symbol} className={styles.tickerItem}>
+              <span className={styles.tickerSymbol}>{symbol}</span>
+              <span className={styles.tickerPrice}>{price.toFixed(2)}</span>
+            </span>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          className={styles.newTradeButton}
+          onClick={() => setCreateOpen(true)}
+        >
+          + New Trade
+        </button>
       </header>
 
       <div className={styles.tabs} role="tablist" aria-label="Views">

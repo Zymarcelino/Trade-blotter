@@ -7,7 +7,7 @@
  * test (per frontend + ux-best-practices steering, Requirement 9.3):
  *
  *  - The global text filter debounces (300ms) before notifying the parent.
- *  - Each per-column dropdown (symbol/side/status/trader) reports its change
+ *  - Each per-column dropdown (symbol/side/status) reports its change
  *    immediately with the column key and selected value.
  *  - Every control has an associated <label> (accessibility).
  *  - The Create Trade button invokes its callback.
@@ -25,7 +25,6 @@ const OPTIONS: BlotterToolbarProps['options'] = {
   symbols: ['AAPL', 'MSFT'],
   sides: ['BUY', 'SELL'],
   statuses: ['ACTIVE', 'CANCELLED'],
-  traders: ['JSMITH', 'ABROWN'],
 };
 
 /** Renders the toolbar with overridable props and spy callbacks. */
@@ -39,7 +38,7 @@ function renderToolbar(overrides: Partial<BlotterToolbarProps> = {}) {
   const props: BlotterToolbarProps = {
     globalFilter: '',
     onGlobalFilterChange,
-    columnFilters: { symbol: '', side: '', status: '', trader: '' },
+    columnFilters: { symbol: '', side: '', status: '' },
     onColumnFilterChange,
     onCreateClick,
     onAddRandomClick: vi.fn(),
@@ -95,7 +94,6 @@ describe('BlotterToolbar', () => {
     expect(screen.getByLabelText(/symbol/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/side/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/status/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/trader/i)).toBeInTheDocument();
   });
 
   it('debounces the global filter and notifies the parent once after 300ms', () => {
@@ -187,7 +185,7 @@ describe('BlotterToolbar', () => {
 
   it('shows the active-filter count on the toggle', () => {
     renderToolbar({
-      columnFilters: { symbol: 'AAPL', side: 'BUY', status: '', trader: '' },
+      columnFilters: { symbol: 'AAPL', side: 'BUY', status: '' },
     });
     expect(
       screen.getByRole('button', { name: /filter \(2\)/i }),
@@ -196,7 +194,7 @@ describe('BlotterToolbar', () => {
 
   it('invokes onClearFilters when Clear is pressed', () => {
     const { onClearFilters } = renderToolbar({
-      columnFilters: { symbol: 'AAPL', side: '', status: '', trader: '' },
+      columnFilters: { symbol: 'AAPL', side: '', status: '' },
     });
     openFilters();
     fireEvent.click(screen.getByRole('button', { name: /^clear$/i }));
