@@ -21,7 +21,7 @@
  * _Requirements: 9.3, 18.2, 19.5, 19.6, 19.7, 19.8_
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 
 import styles from './BlotterToolbar.module.css';
 
@@ -116,7 +116,7 @@ export interface BlotterToolbarProps {
   readonly isRefreshing?: boolean;
 }
 
-export function BlotterToolbar({
+function BlotterToolbarComponent({
   globalFilter,
   onGlobalFilterChange,
   columnFilters,
@@ -469,3 +469,12 @@ function RangeFilter({
     </div>
   );
 }
+
+
+/**
+ * Memoised so the toolbar does not re-render on every WebSocket stream tick.
+ * TradeTable passes stable `options` and useCallback-wrapped handlers, so the
+ * search box, dropdowns, and range inputs stay focused and responsive while
+ * trades are streaming in.
+ */
+export const BlotterToolbar = memo(BlotterToolbarComponent);

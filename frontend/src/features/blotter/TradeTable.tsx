@@ -24,7 +24,14 @@
  * _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9_
  */
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   createCoreRowModel,
   createFilteredRowModel,
@@ -166,17 +173,22 @@ const EMPTY_COLUMN_FILTERS: ColumnFilterValues = {
   priceMax: '',
 };
 
-/** Derives the distinct sorted option list for a string field of the trades. */
-function distinctValues(
-  trades: readonly Readonly<Trade>[],
-  field: keyof Trade,
-): string[] {
-  const set = new Set<string>();
-  for (const trade of trades) {
-    set.add(String(trade[field]));
-  }
-  return [...set].sort();
-}
+/**
+ * Stable, predefined dropdown option lists for the filter bar. Defined once at
+ * module scope so the `options` prop handed to the (memoised) toolbar keeps a
+ * constant identity across the high-frequency stream re-renders - the filter
+ * controls therefore stay fully interactive (no focus loss, no dropdown reset)
+ * while trades are streaming in. Symbols are the fixed instrument universe;
+ * side/status are their complete domains, so every valid value is always
+ * selectable even if none are currently on screen.
+ */
+const FILTER_OPTIONS = {
+  symbols: [
+    'AAPL', 'AMZN', 'BAC', 'GOOGL', 'GS', 'JPM', 'META', 'MSFT', 'NVDA', 'TSLA',
+  ] as string[],
+  sides: [TradeSide.BUY, TradeSide.SELL] as string[],
+  statuses: [TradeStatus.ACTIVE, TradeStatus.CANCELLED] as string[],
+} as const;
 
 export function TradeTable({
   onRowClick,
@@ -325,36 +337,39 @@ export function TradeTable({
     onPaginationChange: setPagination,
   });
 
-  // Dropdown option lists, derived from the full (unfiltered) trade list.
-  const filterOptions = useMemo(
-    () => ({
-      symbols: distinctValues(trades, 'symbol'),
-      sides: [TradeSide.BUY, TradeSide.SELL] as string[],
-      // Predefined status set (not derived) so CANCELLED is always selectable.
-      statuses: [TradeStatus.ACTIVE, TradeStatus.CANCELLED] as string[],
-    }),
-    [trades],
+  // Stable predefined dropdown options (see FILTER_OPTIONS): constant identity
+  // so the toolbar does not re-render/lose focus on every stream tick.
+  const filterOptions = FILTER_OPTIONS;
+
+  const handleColumnFilterChange = useCallback(
+    (column: FilterableColumn, value: string): void => {
+      setColumnFilterValues((prev) => ({ ...prev, [column]: value }));
+      // Any filter change resets to the first page so the user sees matches.
+      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    },
+    [],
   );
 
-  const handleColumnFilterChange = (
-    column: FilterableColumn,
-    value: string,
-  ): void => {
-    setColumnFilterValues((prev) => ({ ...prev, [column]: value }));
-    // Any filter change resets to the first page so the user sees matches.
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-  };
-
-  const handleGlobalFilterChange = (value: string): void => {
+  const handleGlobalFilterChange = useCallback((value: string): void => {
     setGlobalFilter(value);
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-  };
+  }, []);
 
   // Clear all per-column filters and return to the first page.
-  const handleClearFilters = (): void => {
+  const handleClearFilters = useCallback((): void => {
     setColumnFilterValues(EMPTY_COLUMN_FILTERS);
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-  };
+  }, []);
+
+  // Stable toggle callbacks so the memoised toolbar keeps them by identity and
+  // is not re-rendered on every stream tick (which would disrupt filter focus).
+  const handleToggleTimeSort = useCallback((): void => {
+    setTimeSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
+  }, []);
+
+  const handleStreamPausedToggle = useCallback((): void => {
+    setStreamPaused(!useTradeStore.getState().streamPaused);
+  }, [setStreamPaused]);
 
   // Header stats derived from the full (unfiltered) trade set. Active trades
   // drive both the active count and the notional (price x quantity) total.
@@ -388,14 +403,20 @@ export function TradeTable({
 
   // Changing the page size re-slices the already-loaded dataset client-side (no
   // API call). The current page index is clamped to the last valid page so the
-  // grid never lands on an empty page (Requirements 18.3, 18.5).
-  const handlePageSizeChange = (nextPageSize: number): void => {
-    const lastPageIndex = Math.max(0, Math.ceil(filteredCount / nextPageSize) - 1);
-    setPagination((prev) => ({
-      pageSize: nextPageSize,
-      pageIndex: Math.min(prev.pageIndex, lastPageIndex),
-    }));
-  };
+  // grid never lands on an empty page (Requirements 18.3, 18.5). Read the
+  // filtered row count off the table imperatively so this callback keeps a
+  // stable identity - the memoised toolbar must not re-render every stream tick.
+  const handlePageSizeChange = useCallback(
+    (nextPageSize: number): void => {
+      const rowCount = table.getFilteredRowModel().rows.length;
+      const lastPageIndex = Math.max(0, Math.ceil(rowCount / nextPageSize) - 1);
+      setPagination((prev) => ({
+        pageSize: nextPageSize,
+        pageIndex: Math.min(prev.pageIndex, lastPageIndex),
+      }));
+    },
+    [table],
+  );
   const pageRows = table.getPaginatedRowModel().rows;
 
   // --- Row virtualization (Requirement 22) --------------------------------
@@ -464,9 +485,7 @@ export function TradeTable({
         onColumnFilterChange={handleColumnFilterChange}
         onClearFilters={handleClearFilters}
         timeSortDir={timeSortDir}
-        onToggleTimeSort={() =>
-          setTimeSortDir((d) => (d === 'desc' ? 'asc' : 'desc'))
-        }
+        onToggleTimeSort={handleToggleTimeSort}
         onCreateClick={onCreateClick ?? (() => undefined)}
         onAddRandomClick={onAddRandomClick ?? (() => undefined)}
         options={filterOptions}
@@ -477,7 +496,7 @@ export function TradeTable({
         streamIntervalMs={streamIntervalMs}
         onStreamIntervalChange={setStreamIntervalMs}
         streamPaused={streamPaused}
-        onStreamPausedToggle={() => setStreamPaused(!streamPaused)}
+        onStreamPausedToggle={handleStreamPausedToggle}
         onRefresh={refetch}
         isRefreshing={isFetching}
       />
