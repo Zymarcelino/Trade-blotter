@@ -1,0 +1,37 @@
+# nginx config template. The nginx image runs envsubst on this at container
+# start, substituting only ${BACKEND_ORIGIN} (limited via NGINX_ENVSUBST_FILTER
+# so nginx's own $uri/$host/$http_upgrade variables are left intact).
+#
+#   - Local Docker Compose: BACKEND_ORIGIN defaults to http://backend:3000
+#     (the Compose service name), set in the Dockerfile.
+#   - Render: render.yaml sets BACKEND_ORIGIN to the backend service's internal
+#     URL (http://trade-blotter-backend:<port>).
+server {
+    listen 80;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # SPA routing - serve index.html for any non-file path so client-side
+    # routing works on direct navigation / refresh.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # REST API -> backend, same-origin.
+    location /api {
+        proxy_pass ${BACKEND_ORIGIN};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+    }
+
+    # WebSocket endpoint -> backend, with the upgrade handshake headers.
+    location /ws {
+        proxy_pass ${BACKEND_ORIGIN};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+    }
+}

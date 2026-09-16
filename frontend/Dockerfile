@@ -22,5 +22,10 @@ RUN npm run build
 # /api and /ws to the backend so the SPA is served same-origin.
 FROM nginx:alpine AS runner
 COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Env-substituted nginx template: BACKEND_ORIGIN defaults to the Compose
+# service (http://backend:3000) and is overridden on Render via env.
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+ENV BACKEND_ORIGIN=http://backend:3000
+# Limit envsubst to BACKEND_ORIGIN so nginx's own $variables are preserved.
+ENV NGINX_ENVSUBST_FILTER=BACKEND_ORIGIN
 EXPOSE 80
