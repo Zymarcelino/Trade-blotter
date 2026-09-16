@@ -1,39 +1,44 @@
-/* Toast stack, fixed top-right. Solid/opaque so text stays legible. */
-
 .container {
   position: fixed;
-  top: var(--space-4);
-  right: var(--space-4);
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  z-index: 2000;
-  max-width: 360px;
+  gap: 0.5rem;
+  max-width: 24rem;
+  pointer-events: none;
 }
 
 .toast {
+  pointer-events: auto;
   display: flex;
   align-items: flex-start;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border-radius: var(--radius);
-  border: 1px solid var(--border-bright);
-  /* Solid, opaque background so overlapping content never bleeds through. */
+  gap: 0.5rem;
+  padding: 0.75rem 0.875rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--border);
+  border-left: 4px solid transparent;
+  box-shadow: 0 8px 24px #00000080;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
   background-color: var(--panel);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  color: var(--text);
 }
 
 .success {
-  border-left: 4px solid var(--buy);
+  border-left-color: var(--buy);
+  background-color: #132a20;
 }
 
 .error {
-  border-left: 4px solid var(--sell);
+  border-left-color: var(--sell);
+  background-color: #2a1519;
 }
 
 .icon {
-  font-size: 15px;
-  line-height: 1.2;
+  flex-shrink: 0;
+  font-weight: 700;
 }
 
 .success .icon {
@@ -45,41 +50,33 @@
 }
 
 .text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
   flex: 1 1 auto;
+  min-width: 0;
 }
 
 .label {
   font-weight: 700;
-  font-size: 12px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.success .label {
-  color: var(--buy);
-}
-
-.error .label {
-  color: var(--sell);
+  margin-right: 0.25rem;
 }
 
 .message {
-  color: var(--text);
-  font-size: 13px;
+  flex: 1 1 auto;
+  word-break: break-word;
 }
 
 .dismiss {
-  background: none;
+  flex-shrink: 0;
   border: none;
-  color: var(--text-muted);
-  font-size: 18px;
+  background: transparent;
+  color: inherit;
+  font-size: 1.125rem;
   line-height: 1;
-  padding: 0 var(--space-1);
+  cursor: pointer;
+  padding: 0 0.125rem;
+  opacity: 0.6;
 }
 
-.dismiss:hover {
-  color: var(--text);
+.dismiss:hover,
+.dismiss:focus-visible {
+  opacity: 1;
 }

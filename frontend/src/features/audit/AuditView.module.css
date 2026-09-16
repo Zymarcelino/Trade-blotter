@@ -1,86 +1,246 @@
-/* Global audit trail feed view. */
-
 .view {
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  flex: 1 1 auto;
-  padding: var(--space-4);
-  gap: var(--space-3);
-  overflow: hidden;
+  height: 100%;
+  min-height: 24rem;
+  background: var(--bg);
 }
 
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: flex;
   align-items: baseline;
-  gap: var(--space-3);
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
 }
 
 .title {
-  font-size: 16px;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .subtitle {
-  font-size: 12px;
-  color: var(--text-muted);
+  font-size: 0.6875rem;
+  color: var(--text-dim);
 }
 
+.count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* Retryable error banner (no hashed rule existed; matches app error styling). */
 .errorBanner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  background-color: rgba(255, 69, 96, 0.12);
+  gap: 1rem;
+  padding: 0.625rem 1.5rem;
+  background: #ff45601a;
   color: var(--sell);
-  border-radius: var(--radius);
+  border-bottom: 1px solid rgba(255, 69, 96, 0.3);
+  font-size: 0.8125rem;
 }
 
 .errorBanner button {
-  padding: 4px 12px;
-  border-radius: var(--radius);
-  border: 1px solid var(--sell);
-  background: none;
+  padding: 0.25rem 0.75rem;
+  font-weight: 600;
   color: var(--sell);
+  background: transparent;
+  border: 1px solid var(--sell);
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.errorBanner button:hover,
+.errorBanner button:focus-visible {
+  background: #ff456026;
 }
 
 .body {
   flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  overflow-y: auto;
 }
 
-.status,
-.empty {
-  padding: var(--space-5);
+.feed {
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+
+.status {
   text-align: center;
   color: var(--text-muted);
+  padding: 3rem 1rem;
+  font-size: 0.875rem;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 0.8125rem;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 0.5rem 1.5rem;
+  border-bottom: 1px solid var(--border-dim);
+  vertical-align: top;
+}
+
+.table td {
+  font-family: var(--font-mono);
+  color: var(--text);
 }
 
 .table th {
   position: sticky;
   top: 0;
-  background-color: var(--surface);
-  text-align: left;
-  padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--border-bright);
+  font-weight: 600;
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--text-muted);
-}
-
-.table td {
-  padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--border);
-  font-family: var(--font-mono);
+  background-color: var(--surface);
 }
 
 .tradeId {
   color: var(--accent);
+  font-weight: 600;
+}
+
+.symbol {
+  margin-left: 0.5rem;
+  color: var(--text-muted);
+}
+
+.oldVal {
+  color: var(--text-muted);
+}
+
+.newVal {
+  color: var(--text);
+}
+
+.ts {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 3rem 1rem;
+  font-size: 0.875rem;
+}
+
+.error {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.errorMessage {
+  color: var(--sell);
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+}
+
+.retryButton {
+  border: 1px solid var(--accent);
+  background-color: var(--accent);
+  color: var(--bg);
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.retryButton:hover,
+.retryButton:focus-visible {
+  filter: brightness(1.12);
+  outline: 2px solid var(--accent);
+}
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+}
+
+.skeletonRow {
+  height: 1.5rem;
+  border-radius: 0.25rem;
+  background: linear-gradient(
+    90deg,
+    var(--surface) 25%,
+    var(--border) 37%,
+    var(--surface) 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeletonRow {
+    animation: none;
+  }
+}
+
+.pill {
+  display: inline-block;
+  padding: 0.05rem 0.4rem;
+  border-radius: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.greenPill {
+  color: var(--buy);
+  background: #00e67624;
+}
+
+.redPill {
+  color: var(--sell);
+  background: #ff456024;
+}
+
+.plainStrong {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.plainMuted {
+  color: var(--text-muted);
+}
+
+.dash {
+  color: var(--text-dim);
+}
+
+.field {
+  color: var(--text-muted);
 }

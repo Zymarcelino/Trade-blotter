@@ -1,38 +1,56 @@
-/* Full-page error fallback. */
-
 .fallback {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  padding: 2rem;
   background-color: var(--bg);
-  padding: var(--space-5);
 }
 
 .panel {
+  max-width: 28rem;
   text-align: center;
-  max-width: 420px;
-  padding: var(--space-5);
-  border: 1px solid var(--border-bright);
-  border-radius: var(--radius);
-  background-color: var(--surface);
+  padding: 2rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background-color: var(--panel);
+  box-shadow: 0 16px 48px #0000008c;
 }
 
 .title {
-  font-size: 20px;
-  margin-bottom: var(--space-3);
+  margin: 0 0 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 1.125rem;
+  letter-spacing: 0.04em;
+  color: var(--text);
 }
 
 .message {
+  margin: 0 0 1.5rem;
   color: var(--text-muted);
-  margin-bottom: var(--space-4);
+  line-height: 1.5;
 }
 
 .reloadButton {
-  padding: 8px 20px;
-  border-radius: var(--radius);
-  border: 1px solid var(--accent);
-  background-color: rgba(41, 182, 246, 0.14);
-  color: var(--accent);
+  padding: 0.625rem 1.5rem;
+  font-size: 0.9375rem;
   font-weight: 600;
+  color: var(--bg);
+  background-color: var(--accent);
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.reloadButton:hover {
+  filter: brightness(1.12);
+}
+
+.reloadButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }

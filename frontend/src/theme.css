@@ -1,43 +1,25 @@
 /*
  * Global theme + base reset for the trade blotter. Dark trading-desk palette.
- * CSS custom properties are the single source of colour/spacing tokens; every
- * CSS Module references these vars rather than hard-coding values.
+ * CSS custom properties are the single source of colour/typography tokens;
+ * every CSS Module references these vars rather than hard-coding values.
  */
 
 :root {
-  /* Surfaces */
   --bg: #080b0e;
   --surface: #0d1117;
   --panel: #111820;
   --border: #1e2d3d;
+  --border-dim: rgba(30, 45, 61, 0.5);
   --border-bright: #2a3f54;
-
-  /* Text */
   --text: #c9d1d9;
   --text-muted: #586a7e;
   --text-dim: #3d5166;
-
-  /* Accents */
   --buy: #00e676;
   --sell: #ff4560;
   --amber: #ffc107;
   --accent: #29b6f6;
-
-  /* Typography */
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
-    Arial, sans-serif;
-  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-
-  /* Spacing scale */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-
-  --radius: 6px;
-
-  color-scheme: dark;
+  --font-sans: "IBM Plex Sans", system-ui, -apple-system, Segoe UI, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 * {
@@ -48,36 +30,37 @@ html,
 body,
 #root {
   height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  margin: 0;
-  background-color: var(--bg);
+  background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 1.4;
+  font-size: 13px;
   -webkit-font-smoothing: antialiased;
 }
 
-button {
-  font-family: inherit;
-  cursor: pointer;
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-input,
-select,
-button {
-  font-size: inherit;
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-h1,
-h2,
-h3 {
-  margin: 0;
-  font-weight: 600;
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
 }
 
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-bright);
+}
+
+/* Visually-hidden helper used by non-module markup (e.g. audit skeleton). */
 .sr-only {
   position: absolute;
   width: 1px;

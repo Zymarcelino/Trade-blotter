@@ -1,252 +1,371 @@
-/* Non-blocking audit history side panel (fixed to the right edge). */
-
 .panel {
   position: fixed;
   top: 0;
   right: 0;
   bottom: 0;
-  width: 400px;
-  max-width: 90vw;
+  width: 28rem;
+  max-width: 100vw;
   display: flex;
   flex-direction: column;
-  background-color: var(--surface);
-  border-left: 1px solid var(--border-bright);
-  box-shadow: -20px 0 50px rgba(0, 0, 0, 0.5);
-  z-index: 900;
+  background-color: var(--panel);
+  border-left: 1px solid var(--border);
+  box-shadow: -8px 0 32px #00000080;
+  z-index: 40;
+  overflow-y: auto;
+  color: var(--text);
 }
 
 .header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: var(--space-4);
+  gap: 1rem;
+  padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background-color: var(--panel);
+  z-index: 1;
 }
 
 .headerText {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 0.4rem;
+  min-width: 0;
 }
 
 .eyebrow {
-  font-size: 11px;
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
+  color: var(--text-dim);
 }
 
 .title {
+  margin: 0;
   font-family: var(--font-mono);
-  font-size: 18px;
-  color: var(--accent);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
 }
 
 .pillRow {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  margin-top: var(--space-1);
+  gap: 0.5rem;
 }
 
 .headerSymbol {
   font-family: var(--font-mono);
-  font-weight: 600;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text);
 }
 
 .pill {
   display: inline-block;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.activePill {
-  background-color: rgba(41, 182, 246, 0.12);
-  color: var(--accent);
-}
-
-.cancelledPill {
-  background-color: rgba(88, 106, 126, 0.15);
-  color: var(--text-muted);
+  padding: 0.05rem 0.4rem;
+  border-radius: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .buyPill {
-  background-color: rgba(0, 230, 118, 0.12);
   color: var(--buy);
+  background: #00e67624;
 }
 
 .sellPill {
-  background-color: rgba(255, 69, 96, 0.12);
   color: var(--sell);
+  background: #ff456024;
+}
+
+.activePill {
+  color: var(--buy);
+  background: #00e6761f;
+}
+
+.cancelledPill {
+  color: var(--sell);
+  background: #ff45601f;
 }
 
 .closeButton {
-  background: none;
   border: none;
-  color: var(--text-muted);
-  font-size: 22px;
+  background: transparent;
+  font-size: 1.5rem;
   line-height: 1;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  color: var(--text-muted);
+  border-radius: 0.25rem;
 }
 
-.closeButton:hover {
+.closeButton:hover,
+.closeButton:focus-visible {
+  background-color: var(--surface);
   color: var(--text);
+  outline: 2px solid var(--accent);
 }
 
 .body {
-  flex: 1 1 auto;
-  overflow: auto;
-  padding: var(--space-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
+  padding: 1.25rem;
+  flex: 1;
 }
 
 .summary {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: var(--space-3);
-  background-color: var(--panel);
+  margin-bottom: 1.5rem;
+}
+
+.tableHeading {
+  margin: 0 0 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
 }
 
 .summaryList {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
 }
 
 .summaryRow {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: 1rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.summaryRow:last-child {
+  border-bottom: none;
 }
 
 .summaryTerm {
-  color: var(--text-muted);
-  font-size: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
 }
 
 .summaryValue {
   margin: 0;
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  text-align: right;
 }
 
-.tableHeading {
-  font-size: 13px;
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 0.5rem 0.625rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.table td {
+  font-family: var(--font-mono);
+  color: var(--text);
+}
+
+.table th {
+  font-weight: 600;
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--text-muted);
-  margin-bottom: var(--space-2);
+  background-color: var(--surface);
 }
 
 .empty {
+  text-align: center;
   color: var(--text-muted);
-  font-size: 13px;
+  padding: 2rem 1rem;
+  font-size: 0.875rem;
+}
+
+.error {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.errorMessage {
+  color: var(--sell);
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+}
+
+.retryButton {
+  border: 1px solid var(--accent);
+  background-color: var(--accent);
+  color: var(--bg);
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.retryButton:hover,
+.retryButton:focus-visible {
+  filter: brightness(1.12);
+  outline: 2px solid var(--accent);
 }
 
 .skeleton {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 0.625rem;
 }
 
 .skeletonRow {
-  height: 40px;
-  border-radius: var(--radius);
+  height: 1.25rem;
+  border-radius: 0.25rem;
   background: linear-gradient(
     90deg,
-    var(--panel) 25%,
-    var(--border) 50%,
-    var(--panel) 75%
+    var(--surface) 25%,
+    var(--border) 37%,
+    var(--surface) 63%
   );
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
 }
 
-.error {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border-radius: var(--radius);
-  background-color: rgba(255, 69, 96, 0.12);
+.skeletonRow:nth-child(1) {
+  width: 70%;
 }
 
-.errorMessage {
-  margin: 0;
-  color: var(--sell);
-  font-size: 13px;
+.skeletonRow:nth-child(2) {
+  width: 90%;
 }
 
-.retryButton {
-  align-self: flex-start;
-  padding: 6px 14px;
-  border-radius: var(--radius);
-  border: 1px solid var(--sell);
-  background: none;
-  color: var(--sell);
+.skeletonRow:nth-child(3) {
+  width: 80%;
+}
+
+.skeletonRow:nth-child(4) {
+  width: 95%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeletonRow {
+    animation: none;
+  }
 }
 
 .timeline {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
+  position: relative;
+}
+
+.timeline:before {
+  content: "";
+  position: absolute;
+  left: 0.3125rem;
+  top: 0.25rem;
+  bottom: 0.25rem;
+  width: 1px;
+  background: var(--border);
 }
 
 .timelineItem {
-  display: flex;
-  gap: var(--space-3);
+  position: relative;
+  padding: 0 0 1rem 1.25rem;
+}
+
+.timelineItem:last-child {
+  padding-bottom: 0;
 }
 
 .timelineDot {
-  margin-top: 6px;
-  width: 8px;
-  height: 8px;
+  position: absolute;
+  left: 0;
+  top: 0.3rem;
+  width: 0.6875rem;
+  height: 0.6875rem;
   border-radius: 50%;
-  background-color: var(--accent);
-  flex: 0 0 auto;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--panel);
 }
 
 .timelineContent {
-  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .timelineTop {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  gap: var(--space-2);
+  gap: 0.75rem;
 }
 
 .timelineField {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
   font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
 }
 
 .timelineTime {
-  font-size: 12px;
-  color: var(--text-muted);
   font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .timelineChange {
   display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-top: 2px;
+  align-items: baseline;
+  gap: 0.5rem;
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .oldVal {
   color: var(--text-muted);
+  text-decoration: line-through;
 }
 
 .arrow {
-  color: var(--text-dim);
+  color: var(--accent);
 }
 
 .newVal {
   color: var(--text);
+  font-weight: 600;
 }
