@@ -3,7 +3,26 @@
 The brief lists `database/` as a top-level deliverable. This project uses **SQLite**
 (via `better-sqlite3`), which is a single embedded file rather than a separate
 database service - so the database layer lives inside the backend rather than as its
-own deployable. This directory is a pointer to where it actually is.
+own deployable. This directory contains the standalone schema and seed reference for
+that database, and points to where the executable code lives.
+
+## Files in this directory
+
+| File | Purpose |
+|------|---------|
+| `schema.sql` | Canonical DDL (tables, CHECK constraints, indexes). Mirrors the idempotent startup migrations. |
+| `seed.sql` | Documents the 500-row seed the app generates on first startup, plus a small illustrative `INSERT` you can run by hand. |
+| `README.md` | This file. |
+
+You can create an empty database by hand with:
+
+```
+sqlite3 trades.db < database/schema.sql
+sqlite3 trades.db < database/seed.sql   # optional illustrative rows
+```
+
+The application does this for you automatically on startup - you do not need to run
+these by hand to use the app.
 
 ## Where the database code lives
 
@@ -28,7 +47,7 @@ Tests for the DB layer (against a real in-memory SQLite instance) are co-located
   is ephemeral and the app re-seeds 500 trades on each empty startup (a documented
   demo trade-off).
 
-The database file is not committed (it is generated + seeded on startup); see
+The database file itself is not committed (it is generated + seeded on startup); see
 `.gitignore`.
 
 ## Schema
@@ -63,5 +82,4 @@ CREATE INDEX IF NOT EXISTS idx_trades_status   ON trades(status);
 CREATE INDEX IF NOT EXISTS idx_audit_trade_id  ON trade_audit(trade_id);
 ```
 
-See `ARCHITECTURE.md` for why SQLite was chosen and the scaling trade-offs (and the
-migration path to Postgres behind the same `ITradeRepository` interface).
+The full DDL is also kept as a runnable file in `schema.sql` alongside this README.

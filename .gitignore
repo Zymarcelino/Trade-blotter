@@ -28,7 +28,5 @@ Thumbs.db
 
 # Local-only files (kept on disk, intentionally NOT pushed to the remote)
 .kiro/
-pnpm-lock.yaml
-REVIEWER-PREP.md
-ARCHITECTURE.md
+misc/
 PROMPT-LOG-FULL.md

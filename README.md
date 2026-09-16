@@ -34,7 +34,7 @@ The hosted services may sleep when idle; the first request wakes them (about 30-
   render.yaml               hosted deployment blueprint (two services)
   AI-USAGE-REPORT.md        how AI tools were used
   PROMPT-LOG.md             representative prompts + outcomes
-  database/                 pointer to the DB layer + schema (SQLite is embedded)
+  database/                 schema.sql + seed.sql + pointer to the DB layer (SQLite is embedded)
   backend/                  Fastify + SQLite + WebSocket API
     src/routes/             HTTP handlers (HTTP only)
     src/services/           business logic
