@@ -1,43 +1,31 @@
 /**
- * usePositions — fetches net-position aggregates and enriches them with the
- * latest simulated market prices from the store to produce mark-to-market rows
- * for the Positions / P&L view.
+ * usePositions - derives mark-to-market positions from the LIVE store state.
+ *
+ * Reads the live trade list and the latest simulated market prices from the
+ * Zustand store and runs the pure {@link computePositions}. Because both inputs
+ * are store selectors, the Positions / P&L view recomputes automatically as new
+ * trades stream in (TRADE_CREATED/AMENDED/CANCELLED) and as prices tick
+ * (PRICE_TICK) - no server refetch involved.
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
-import { getPositions } from '../services/trade.api';
-import { ApiError } from '../services/errors';
 import { useTradeStore } from '../store/trade.store';
 import { computePositions, type Position } from '../utils/computePositions';
 
 /** The shape returned by {@link usePositions}. */
 export interface UsePositionsResult {
   readonly positions: Position[];
-  readonly isLoading: boolean;
-  readonly isError: boolean;
-  readonly error: ApiError | null;
-  readonly refetch: () => void;
 }
 
-export function usePositions(enabled = true): UsePositionsResult {
+export function usePositions(): UsePositionsResult {
+  const trades = useTradeStore((s) => s.trades);
   const marketPrices = useTradeStore((s) => s.marketPrices);
 
-  const query = useQuery({
-    queryKey: ['positions'],
-    queryFn: () => getPositions(),
-    enabled,
-  });
+  const positions = useMemo(
+    () => computePositions(trades, marketPrices),
+    [trades, marketPrices],
+  );
 
-  const summaries = query.data?.data ?? [];
-
-  return {
-    positions: computePositions(summaries, marketPrices),
-    isLoading: query.isLoading && enabled,
-    isError: query.isError,
-    error: query.error instanceof ApiError ? query.error : null,
-    refetch: () => {
-      void query.refetch();
-    },
-  };
+  return { positions };
 }

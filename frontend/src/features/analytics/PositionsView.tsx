@@ -1,132 +1,123 @@
 /**
- * <PositionsView /> — the combined real-time Positions / P&L analytics view.
+ * <PositionsView /> - the real-time Positions / P&L analytics view.
  *
- * Fetches net-position aggregates and notional P&L from the server and marks
- * positions to market using the latest simulated prices streamed into the
- * store. Because there is no real market feed, prices are simulated on the
- * backend and pushed via PRICE_TICK; this is surfaced with a visible
- * "simulated prices" marker so the numbers are never mistaken for real MTM.
+ * Derives net positions and mark-to-market P&L entirely from the LIVE store via
+ * {@link usePositions}, so the numbers recompute as trades stream in and as the
+ * simulated prices tick - no refetch. Prices are simulated (VWAP-seeded with a
+ * small drift), surfaced with a visible "simulated prices" marker so the P&L is
+ * never mistaken for a real market feed.
  *
- * Renders as a labelled region with a semantic table. Handles the four async
- * surfaces (loading / data / empty / error) with a retryable error state.
+ * Renders a labelled region: a three-cell P&L summary bar (Total / Unrealised /
+ * Realised) plus a semantic per-symbol table, with an explicit empty state.
  *
  * _Requirements: analytics view (positions + mark-to-market P&L)_
  */
 
-import { useMemo } from 'react';
-
 import { usePositions } from '../../hooks/usePositions';
-import { usePnl } from '../../hooks/usePnl';
-import { formatCurrency } from '../../utils/formatters';
-import { resolveErrorMessage } from '../../utils/errorMessages';
-import type { PnlSummary } from '../../types/trade.types';
 import styles from './PositionsView.module.css';
 
-/** Formats a signed currency value with a leading sign for clarity. */
-function formatSigned(value: number | null): string {
-  if (value === null) {
-    return '\u2014';
-  }
-  const sign = value < 0 ? '-' : '';
-  return `${sign}$${formatCurrency(Math.abs(value))}`;
+/** Formats a signed USD amount with a leading +/- and thousands separators. */
+function formatSignedCurrency(value: number): string {
+  const sign = value > 0 ? '+' : value < 0 ? '-' : '';
+  const abs = Math.abs(value).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return `${sign}$${abs}`;
+}
+
+/** Formats a plain number to 2 dp with thousands separators. */
+function formatNum(value: number, dp = 2): string {
+  return value.toLocaleString('en-US', {
+    minimumFractionDigits: dp,
+    maximumFractionDigits: dp,
+  });
+}
+
+/** Chooses the P&L colour class from the sign of the value. */
+function pnlClass(value: number): string {
+  if (value > 0) return styles.positive;
+  if (value < 0) return styles.negative;
+  return styles.flat;
 }
 
 export function PositionsView(): React.JSX.Element {
-  const positions = usePositions(true);
-  const pnl = usePnl(true);
+  const { positions } = usePositions();
 
-  const isLoading = positions.isLoading || pnl.isLoading;
-  const isError = positions.isError || pnl.isError;
-  const errorCode =
-    positions.error?.code ?? pnl.error?.code ?? 'INTERNAL_ERROR';
+  const totalPnl = positions.reduce((s, p) => s + p.totalPnl, 0);
+  const totalUnrealised = positions.reduce((s, p) => s + p.unrealisedPnl, 0);
+  const totalRealised = positions.reduce((s, p) => s + p.realisedPnl, 0);
 
-  // Index P&L by symbol so each position row can show its realised P&L.
-  const pnlBySymbol = useMemo(() => {
-    const map = new Map<string, PnlSummary>();
-    for (const row of pnl.pnl) {
-      map.set(row.symbol, row);
-    }
-    return map;
-  }, [pnl.pnl]);
-
-  const retry = (): void => {
-    positions.refetch();
-    pnl.refetch();
-  };
+  const summary: ReadonlyArray<{ readonly label: string; readonly value: number }> = [
+    { label: 'Total P&L', value: totalPnl },
+    { label: 'Unrealised P&L', value: totalUnrealised },
+    { label: 'Realised P&L', value: totalRealised },
+  ];
 
   return (
-    <section
-      className={styles.view}
-      aria-label="Positions and P&L"
-    >
+    <section className={styles.view} aria-label="Positions and P&L">
       <header className={styles.header}>
         <h2 className={styles.title}>Positions / P&amp;L</h2>
-        <span className={styles.simulated} title="Prices are simulated, not a live market feed">
+        <span
+          className={styles.simulated}
+          title="Prices are simulated, not a live market feed"
+        >
           <span className={styles.dot} aria-hidden="true" /> Simulated prices
         </span>
       </header>
 
-      {isError && (
-        <div className={styles.errorBanner} role="alert">
-          <span>{resolveErrorMessage(errorCode)}</span>
-          <button type="button" onClick={retry}>
-            Retry
-          </button>
-        </div>
-      )}
-
-      <div className={styles.tableWrapper} aria-busy={isLoading}>
-        {isLoading && (
-          <div className={styles.loading} role="status" aria-live="polite">
-            Loading positions...
+      <div className={styles.summaryBar}>
+        {summary.map((item) => (
+          <div key={item.label} className={styles.summaryCell}>
+            <div className={styles.summaryLabel}>{item.label}</div>
+            <div className={`${styles.summaryValue} ${pnlClass(item.value)}`}>
+              {formatSignedCurrency(item.value)}
+            </div>
           </div>
-        )}
+        ))}
+      </div>
+
+      <div className={styles.tableWrapper}>
         <table className={styles.table}>
           <thead>
             <tr>
-              <th scope="col">Symbol</th>
+              <th scope="col" className={styles.left}>Symbol</th>
               <th scope="col">Net Qty</th>
-              <th scope="col">Buy Qty</th>
-              <th scope="col">Sell Qty</th>
+              <th scope="col">Avg Price</th>
               <th scope="col">Mkt Price</th>
-              <th scope="col">Market Value</th>
+              <th scope="col">Unrealised P&amp;L</th>
               <th scope="col">Realised P&amp;L</th>
+              <th scope="col">Total P&amp;L</th>
             </tr>
           </thead>
           <tbody>
-            {positions.positions.length === 0 && !isLoading ? (
+            {positions.length === 0 ? (
               <tr>
                 <td colSpan={7} className={styles.empty}>
-                  No positions to display.
+                  No active positions.
                 </td>
               </tr>
             ) : (
-              positions.positions.map((position) => {
-                const pnlRow = pnlBySymbol.get(position.symbol);
-                return (
-                  <tr key={position.symbol}>
-                    <td className={styles.symbol}>{position.symbol}</td>
-                    <td>{position.netQuantity.toLocaleString()}</td>
-                    <td>{position.buyQuantity.toLocaleString()}</td>
-                    <td>{position.sellQuantity.toLocaleString()}</td>
-                    <td>
-                      {position.marketPrice === null
-                        ? '\u2014'
-                        : `$${formatCurrency(position.marketPrice)}`}
-                    </td>
-                    <td>{formatSigned(position.marketValue)}</td>
-                    <td
-                      className={
-                        pnlRow && pnlRow.realizedPnl < 0
-                          ? styles.negative
-                          : styles.positive
-                      }
-                    >
-                      {formatSigned(pnlRow ? pnlRow.realizedPnl : null)}
-                    </td>
-                  </tr>
-                );
-              })
+              positions.map((pos) => (
+                <tr key={pos.symbol}>
+                  <td className={`${styles.left} ${styles.symbol}`}>{pos.symbol}</td>
+                  <td className={pos.netQty >= 0 ? styles.positive : styles.negative}>
+                    {pos.netQty > 0 ? '+' : ''}
+                    {formatNum(pos.netQty, 0)}
+                  </td>
+                  <td className={styles.muted}>{formatNum(pos.avgPrice)}</td>
+                  <td>{formatNum(pos.marketPrice)}</td>
+                  <td className={pnlClass(pos.unrealisedPnl)}>
+                    {formatSignedCurrency(pos.unrealisedPnl)}
+                  </td>
+                  <td className={pnlClass(pos.realisedPnl)}>
+                    {formatSignedCurrency(pos.realisedPnl)}
+                  </td>
+                  <td className={pnlClass(pos.totalPnl)}>
+                    {formatSignedCurrency(pos.totalPnl)}
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>

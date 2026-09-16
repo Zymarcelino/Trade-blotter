@@ -1,48 +1,98 @@
 /**
- * Pure mark-to-market position math for the analytics view.
+ * Pure mark-to-market position / P&L math for the analytics view.
  *
- * Combines net-position aggregates (from the server) with the latest simulated
- * market prices (from the live PRICE_TICK stream) to produce a per-symbol row
- * carrying the market price and an unrealised mark-to-market value. Kept pure
- * and framework-free so it is trivially unit-testable.
+ * Given the LIVE trade set (from the Zustand store) and the latest simulated
+ * market prices (from the PRICE_TICK stream), it aggregates one row per symbol
+ * with a non-zero net quantity. Because it derives everything from the live
+ * `trades` array, the Positions / P&L view recomputes on every new trade AND on
+ * every price tick - no server refetch needed.
+ *
+ *  - netQty        = ACTIVE BUY qty - ACTIVE SELL qty
+ *  - avgPrice      = volume-weighted average entry on the net side
+ *  - unrealisedPnl = netQty * (marketPrice - avgPrice)
+ *  - realisedPnl   = min(buyQty, sellQty) * (avgSell - avgBuy)
+ *  - totalPnl      = unrealisedPnl + realisedPnl
+ *
+ * CANCELLED trades never contribute. Prices are simulated (VWAP-seeded with a
+ * small random drift), surfaced in the UI as such. Kept pure + framework-free
+ * so it is trivially unit-testable and side-effect free.
  */
 
-import type { PositionSummary } from '../types/trade.types';
+import { TradeStatus, type Trade } from '../types/trade.types';
 
-/** A position enriched with mark-to-market against the latest market price. */
+/** A mark-to-market position summary for a single symbol. */
 export interface Position {
   readonly symbol: string;
-  readonly netQuantity: number;
-  readonly buyQuantity: number;
-  readonly sellQuantity: number;
-  readonly tradeCount: number;
-  /** Latest simulated market price for the symbol, or null if none seen. */
-  readonly marketPrice: number | null;
-  /** netQuantity * marketPrice, or null when the price is unknown. */
-  readonly marketValue: number | null;
+  readonly netQty: number;
+  readonly avgPrice: number;
+  readonly marketPrice: number;
+  readonly unrealisedPnl: number;
+  readonly realisedPnl: number;
+  readonly totalPnl: number;
+}
+
+interface Accumulator {
+  netQty: number;
+  buyQty: number;
+  sellQty: number;
+  buyCost: number;
+  sellCost: number;
+}
+
+/** `+ 0` normalises a signed negative zero (-0) to +0 for stable display. */
+function round2(n: number): number {
+  return Math.round(n * 100) / 100 + 0;
 }
 
 /**
- * Enriches server position summaries with market prices, producing the rows
- * rendered by the Positions / P&L view. Symbols are returned in the input
- * order (the server sorts by symbol ascending).
+ * Computes mark-to-market positions from the live trade set and latest prices.
+ * Symbols whose net quantity is zero are omitted. Ordered by symbol ascending
+ * for a stable display.
  */
 export function computePositions(
-  summaries: ReadonlyArray<PositionSummary>,
+  trades: ReadonlyArray<Readonly<Trade>>,
   marketPrices: Readonly<Record<string, number>>,
 ): Position[] {
-  return summaries.map((summary) => {
-    const marketPrice = marketPrices[summary.symbol] ?? null;
-    const marketValue =
-      marketPrice === null ? null : summary.netQuantity * marketPrice;
-    return {
-      symbol: summary.symbol,
-      netQuantity: summary.netQuantity,
-      buyQuantity: summary.buyQuantity,
-      sellQuantity: summary.sellQuantity,
-      tradeCount: summary.tradeCount,
-      marketPrice,
-      marketValue,
-    };
-  });
+  const bySymbol = new Map<string, Accumulator>();
+
+  for (const trade of trades) {
+    if (trade.status === TradeStatus.CANCELLED) {
+      continue;
+    }
+    const acc =
+      bySymbol.get(trade.symbol) ??
+      { netQty: 0, buyQty: 0, sellQty: 0, buyCost: 0, sellCost: 0 };
+
+    if (trade.side === 'BUY') {
+      acc.netQty += trade.quantity;
+      acc.buyQty += trade.quantity;
+      acc.buyCost += trade.quantity * trade.price;
+    } else {
+      acc.netQty -= trade.quantity;
+      acc.sellQty += trade.quantity;
+      acc.sellCost += trade.quantity * trade.price;
+    }
+    bySymbol.set(trade.symbol, acc);
+  }
+
+  return [...bySymbol.entries()]
+    .filter(([, acc]) => acc.netQty !== 0)
+    .map(([symbol, acc]) => {
+      const avgBuy = acc.buyQty ? acc.buyCost / acc.buyQty : 0;
+      const avgSell = acc.sellQty ? acc.sellCost / acc.sellQty : 0;
+      const avgPrice = acc.netQty > 0 ? avgBuy : avgSell;
+      const marketPrice = marketPrices[symbol] ?? 0;
+      const unrealisedPnl = acc.netQty * (marketPrice - avgPrice);
+      const realisedPnl = Math.min(acc.buyQty, acc.sellQty) * (avgSell - avgBuy);
+      return {
+        symbol,
+        netQty: acc.netQty,
+        avgPrice: round2(avgPrice),
+        marketPrice: round2(marketPrice),
+        unrealisedPnl: round2(unrealisedPnl),
+        realisedPnl: round2(realisedPnl),
+        totalPnl: round2(unrealisedPnl + realisedPnl),
+      };
+    })
+    .sort((a, b) => a.symbol.localeCompare(b.symbol));
 }
