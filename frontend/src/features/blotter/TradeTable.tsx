@@ -32,6 +32,7 @@ import {
   createSortedRowModel,
   columnFilteringFeature,
   filterFn_equalsString,
+  filterFn_inNumberRange,
   filterFn_includesString,
   globalFilteringFeature,
   rowPaginationFeature,
@@ -75,6 +76,7 @@ const blotterFeatures = tableFeatures({
   filterFns: {
     equalsString: filterFn_equalsString,
     includesString: filterFn_includesString,
+    inNumberRange: filterFn_inNumberRange,
   },
 });
 
@@ -94,8 +96,8 @@ const columns: ColumnDef<typeof blotterFeatures, Readonly<Trade>>[] = [
   { id: 'status', accessorKey: 'status', header: 'Status', filterFn: 'equalsString' },
   { id: 'symbol', accessorKey: 'symbol', header: 'Symbol', filterFn: 'equalsString' },
   { id: 'side', accessorKey: 'side', header: 'Side', filterFn: 'equalsString' },
-  { id: 'price', accessorKey: 'price', header: 'Price' },
-  { id: 'quantity', accessorKey: 'quantity', header: 'Quantity' },
+  { id: 'price', accessorKey: 'price', header: 'Price', filterFn: 'inNumberRange' },
+  { id: 'quantity', accessorKey: 'quantity', header: 'Quantity', filterFn: 'inNumberRange' },
   { id: 'book', accessorKey: 'book', header: 'Book' },
   { id: 'counterparty', accessorKey: 'counterparty', header: 'Counterparty' },
 ];
@@ -158,6 +160,10 @@ const EMPTY_COLUMN_FILTERS: ColumnFilterValues = {
   symbol: '',
   side: '',
   status: '',
+  quantityMin: '',
+  quantityMax: '',
+  priceMin: '',
+  priceMax: '',
 };
 
 /** Derives the distinct sorted option list for a string field of the trades. */
@@ -271,11 +277,40 @@ export function TradeTable({
   }, [isAtTop, sortedTrades]);
 
   // Map the friendly per-column filter values into TanStack's column-filter
-  // shape, dropping empty ("All") selections.
+  // shape. String filters (symbol/side/status) use exact-equality and are
+  // dropped when blank ("All"). Quantity/Price are numeric RANGES: an empty
+  // bound is treated as unbounded (undefined), and the pair is passed as the
+  // [min, max] tuple the `inNumberRange` filter fn expects. A range with both
+  // bounds blank is omitted entirely.
   const columnFilters = useMemo<ColumnFiltersState>(() => {
-    return (Object.keys(columnFilterValues) as FilterableColumn[])
-      .filter((key) => columnFilterValues[key] !== '')
-      .map((key) => ({ id: key, value: columnFilterValues[key] }));
+    const filters: ColumnFiltersState = [];
+
+    for (const key of ['symbol', 'side', 'status'] as const) {
+      const value = columnFilterValues[key];
+      if (value !== '') {
+        filters.push({ id: key, value });
+      }
+    }
+
+    const toBound = (raw: string): number | undefined => {
+      if (raw.trim() === '') return undefined;
+      const n = Number(raw);
+      return Number.isFinite(n) ? n : undefined;
+    };
+
+    const qtyMin = toBound(columnFilterValues.quantityMin);
+    const qtyMax = toBound(columnFilterValues.quantityMax);
+    if (qtyMin !== undefined || qtyMax !== undefined) {
+      filters.push({ id: 'quantity', value: [qtyMin, qtyMax] });
+    }
+
+    const priceMin = toBound(columnFilterValues.priceMin);
+    const priceMax = toBound(columnFilterValues.priceMax);
+    if (priceMin !== undefined || priceMax !== undefined) {
+      filters.push({ id: 'price', value: [priceMin, priceMax] });
+    }
+
+    return filters;
   }, [columnFilterValues]);
 
   const table = useTable({
@@ -294,8 +329,9 @@ export function TradeTable({
   const filterOptions = useMemo(
     () => ({
       symbols: distinctValues(trades, 'symbol'),
-      sides: distinctValues(trades, 'side'),
-      statuses: distinctValues(trades, 'status'),
+      sides: [TradeSide.BUY, TradeSide.SELL] as string[],
+      // Predefined status set (not derived) so CANCELLED is always selectable.
+      statuses: [TradeStatus.ACTIVE, TradeStatus.CANCELLED] as string[],
     }),
     [trades],
   );

@@ -53,7 +53,14 @@ export const PAGE_SIZE_OPTIONS = [50, 100, 250, 500] as const;
  * once existed here but the Trader column was removed from the grid, so its
  * filter did nothing; only columns that exist on the table are filterable.)
  */
-export type FilterableColumn = 'symbol' | 'side' | 'status';
+export type FilterableColumn =
+  | 'symbol'
+  | 'side'
+  | 'status'
+  | 'quantityMin'
+  | 'quantityMax'
+  | 'priceMin'
+  | 'priceMax';
 
 /** Current value of each per-column filter (`''` means "no filter"). */
 export type ColumnFilterValues = Readonly<Record<FilterableColumn, string>>;
@@ -159,9 +166,14 @@ export function BlotterToolbar({
   }, [localGlobal, globalFilter]);
 
   // Number of per-column filters currently in effect (Requirement 19.6).
-  const activeFilterCount = Object.values(columnFilters).filter(
-    (v) => v !== '',
-  ).length;
+  // Each string filter counts once; each numeric range (quantity, price)
+  // counts once if either of its bounds is set.
+  const activeFilterCount =
+    (columnFilters.symbol !== '' ? 1 : 0) +
+    (columnFilters.side !== '' ? 1 : 0) +
+    (columnFilters.status !== '' ? 1 : 0) +
+    (columnFilters.quantityMin !== '' || columnFilters.quantityMax !== '' ? 1 : 0) +
+    (columnFilters.priceMin !== '' || columnFilters.priceMax !== '' ? 1 : 0);
 
   return (
     <div className={styles.toolbar}>
@@ -328,6 +340,25 @@ export function BlotterToolbar({
             options={options.statuses}
             onChange={onColumnFilterChange}
           />
+          <RangeFilter
+            label="Quantity"
+            idBase="blotter-filter-quantity"
+            minColumn="quantityMin"
+            maxColumn="quantityMax"
+            minValue={columnFilters.quantityMin}
+            maxValue={columnFilters.quantityMax}
+            onChange={onColumnFilterChange}
+          />
+          <RangeFilter
+            label="Price"
+            idBase="blotter-filter-price"
+            minColumn="priceMin"
+            maxColumn="priceMax"
+            minValue={columnFilters.priceMin}
+            maxValue={columnFilters.priceMax}
+            step="0.01"
+            onChange={onColumnFilterChange}
+          />
           <button
             type="button"
             className={styles.clearButton}
@@ -376,6 +407,65 @@ function ColumnFilter({
           </option>
         ))}
       </select>
+    </div>
+  );
+}
+
+/** Props for a numeric min/max range filter (Quantity, Price). */
+interface RangeFilterProps {
+  readonly label: string;
+  readonly idBase: string;
+  readonly minColumn: FilterableColumn;
+  readonly maxColumn: FilterableColumn;
+  readonly minValue: string;
+  readonly maxValue: string;
+  /** Input step (e.g. '0.01' for price); defaults to '1'. */
+  readonly step?: string;
+  readonly onChange: (column: FilterableColumn, value: string) => void;
+}
+
+/**
+ * A labelled pair of number inputs (min / max) for a numeric column. An empty
+ * bound means "unbounded"; the table treats the pair as an inclusive range.
+ */
+function RangeFilter({
+  label,
+  idBase,
+  minColumn,
+  maxColumn,
+  minValue,
+  maxValue,
+  step = '1',
+  onChange,
+}: RangeFilterProps): React.JSX.Element {
+  return (
+    <div className={styles.rangeField} role="group" aria-label={`${label} range`}>
+      <span className={styles.rangeLabel}>{label}</span>
+      <div className={styles.rangeInputs}>
+        <input
+          id={`${idBase}-min`}
+          type="number"
+          inputMode="decimal"
+          step={step}
+          min="0"
+          placeholder="Min"
+          aria-label={`${label} minimum`}
+          value={minValue}
+          onChange={(e) => onChange(minColumn, e.target.value)}
+        />
+        <span className={styles.rangeSep} aria-hidden="true">-</span>
+        <input
+          id={`${idBase}-max`}
+          type="number"
+          inputMode="decimal"
+          step={step}
+          min="0"
+          placeholder="Max"
+          aria-label={`${label} maximum`}
+          value={maxValue}
+          onChange={(e) => onChange(maxColumn, e.target.value)}
+        />
+      </div>
     </div>
   );
 }

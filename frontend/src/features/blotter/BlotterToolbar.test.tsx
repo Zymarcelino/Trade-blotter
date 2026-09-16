@@ -38,7 +38,15 @@ function renderToolbar(overrides: Partial<BlotterToolbarProps> = {}) {
   const props: BlotterToolbarProps = {
     globalFilter: '',
     onGlobalFilterChange,
-    columnFilters: { symbol: '', side: '', status: '' },
+    columnFilters: {
+      symbol: '',
+      side: '',
+      status: '',
+      quantityMin: '',
+      quantityMax: '',
+      priceMin: '',
+      priceMax: '',
+    },
     onColumnFilterChange,
     onCreateClick,
     onAddRandomClick: vi.fn(),
@@ -185,7 +193,15 @@ describe('BlotterToolbar', () => {
 
   it('shows the active-filter count on the toggle', () => {
     renderToolbar({
-      columnFilters: { symbol: 'AAPL', side: 'BUY', status: '' },
+      columnFilters: {
+        symbol: 'AAPL',
+        side: 'BUY',
+        status: '',
+        quantityMin: '',
+        quantityMax: '',
+        priceMin: '',
+        priceMax: '',
+      },
     });
     expect(
       screen.getByRole('button', { name: /filter \(2\)/i }),
@@ -194,7 +210,15 @@ describe('BlotterToolbar', () => {
 
   it('invokes onClearFilters when Clear is pressed', () => {
     const { onClearFilters } = renderToolbar({
-      columnFilters: { symbol: 'AAPL', side: '', status: '' },
+      columnFilters: {
+        symbol: 'AAPL',
+        side: '',
+        status: '',
+        quantityMin: '',
+        quantityMax: '',
+        priceMin: '',
+        priceMax: '',
+      },
     });
     openFilters();
     fireEvent.click(screen.getByRole('button', { name: /^clear$/i }));
@@ -264,6 +288,60 @@ describe('BlotterToolbar', () => {
     const toggle = screen.getByRole('button', { name: /sort/i });
     expect(toggle).toHaveTextContent(/oldest/i);
     expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('renders Quantity and Price min/max range inputs when filters are shown', () => {
+    renderToolbar();
+    openFilters();
+    expect(screen.getByLabelText(/quantity minimum/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/quantity maximum/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/price minimum/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/price maximum/i)).toBeInTheDocument();
+  });
+
+  it('reports a quantity-min range change with the quantityMin key', () => {
+    const { onColumnFilterChange } = renderToolbar();
+    openFilters();
+    fireEvent.change(screen.getByLabelText(/quantity minimum/i), {
+      target: { value: '1000' },
+    });
+    expect(onColumnFilterChange).toHaveBeenCalledWith('quantityMin', '1000');
+  });
+
+  it('reports a price-max range change with the priceMax key', () => {
+    const { onColumnFilterChange } = renderToolbar();
+    openFilters();
+    fireEvent.change(screen.getByLabelText(/price maximum/i), {
+      target: { value: '500' },
+    });
+    expect(onColumnFilterChange).toHaveBeenCalledWith('priceMax', '500');
+  });
+
+  it('offers the predefined ACTIVE/CANCELLED status options', () => {
+    renderToolbar();
+    openFilters();
+    const select = screen.getByLabelText(/status/i);
+    const values = Array.from(select.querySelectorAll('option')).map(
+      (o) => (o as HTMLOptionElement).value,
+    );
+    expect(values).toEqual(['', 'ACTIVE', 'CANCELLED']);
+  });
+
+  it('counts a quantity range as one active filter (not two)', () => {
+    renderToolbar({
+      columnFilters: {
+        symbol: '',
+        side: '',
+        status: '',
+        quantityMin: '100',
+        quantityMax: '5000',
+        priceMin: '',
+        priceMax: '',
+      },
+    });
+    expect(
+      screen.getByRole('button', { name: /filter \(1\)/i }),
+    ).toBeInTheDocument();
   });
 
 });
