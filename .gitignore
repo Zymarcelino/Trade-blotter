@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# SQLite database + WAL/SHM sidecars (data is seeded on startup)
+backend/data/*.db
+backend/data/*.db-wal
+backend/data/*.db-shm
+
+# Test/coverage output
+coverage/
+
+# Scratch / local capture files
+_*.txt
+
+# Env files (dev-only overrides are documented; do not commit real secrets)
+.env
+.env.local
+.env.*.local
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log

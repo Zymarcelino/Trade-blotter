@@ -1,0 +1,38 @@
+{
+  "name": "trade-blotter-backend",
+  "version": "1.0.0",
+  "description": "Fastify + SQLite + WebSocket backend for the trade blotter application",
+  "type": "commonjs",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/server.ts",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "load-sim": "ts-node src/scripts/loadSim.ts"
+  },
+  "keywords": [
+    "fastify",
+    "sqlite",
+    "websocket",
+    "trade-blotter"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@fastify/cors": "11.3.0",
+    "better-sqlite3": "11.10.0",
+    "fastify": "5.12.4",
+    "ws": "8.21.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "9.6.0",
+    "@types/node": "20.19.43",
+    "@types/ws": "8.18.1",
+    "@vitest/coverage-v8": "3.2.7",
+    "fast-check": "4.10.0",
+    "ts-node": "10.9.2",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}

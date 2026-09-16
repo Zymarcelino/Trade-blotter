@@ -1,0 +1,96 @@
+# Trade Blotter — hosted container deployment (Render Blueprint).
+#
+# WHY RENDER (and not Vercel/Cloudflare Workers):
+# The app needs a LONG-LIVED, STATEFUL process — it holds persistent WebSocket
+# connections and writes to a SQLite file. Serverless/edge platforms spin up
+# ephemeral, stateless function instances and cannot hold an open WebSocket or
+# keep a writable DB file, so they are unsuitable. Render (like Railway/Fly.io)
+# runs a persistent container and supports WebSocket upgrades — exactly what
+# this app requires. (Requirement 15.9)
+#
+# ------------------------------------------------------------------------------
+# DEPLOYMENT MODEL: single backend web service, same-origin frontend
+# ------------------------------------------------------------------------------
+# The chosen model is ONE Docker web service running the backend. The backend
+# binds 0.0.0.0 on the platform-provided PORT (verified in backend/src/server.ts:
+# `readConfig()` reads PORT from process.env and `app.listen({ port, host:
+# '0.0.0.0' })`), so Render can route external traffic to it. (Requirement 15.10)
+#
+# Why not a second frontend service here:
+# The frontend's nginx.conf proxies /api and /ws to the Docker Compose service
+# name `http://backend:3000`, which only resolves on the local Compose network —
+# it is NOT valid on Render. Rather than maintain a Render-specific nginx config,
+# the simplest coherent hosted model is to serve the built SPA same-origin with
+# the API. Two supported options, both keeping /api and /ws on ONE origin:
+#
+#   (A) Single service (documented here): the backend serves the built frontend
+#       static assets AND /api + /ws from the same origin. config/env.ts already
+#       resolves API_BASE to the relative `/api/v1` and derives the WebSocket URL
+#       as `ws(s)://<host>/ws` at runtime, so the SPA needs NO rebuild and NO
+#       VITE_* overrides to work on the hosted origin. (Requirement 15.7, 15.8)
+#
+#   (B) Two services: add a second Docker web service for the nginx frontend and
+#       point its proxy at the backend's internal Render address (and/or use a
+#       Render route/rewrite rule to forward /api and /ws to the backend). Left
+#       commented below as a reference — the platform/router MUST forward /api
+#       and /ws to the backend origin for the same-origin defaults to work.
+#
+# In BOTH options the frontend build is environment-agnostic: URLs resolve
+# same-origin at runtime, so the same artifact serves local Docker and hosted.
+#
+# ------------------------------------------------------------------------------
+# PERSISTENCE
+# ------------------------------------------------------------------------------
+# A persistent disk is mounted at /data and DB_PATH points at /data/trades.db,
+# so the SQLite file survives restarts and redeploys. (Requirement 15.11)
+#
+# EPHEMERAL FALLBACK (Requirement 15.12): if NO disk is attached (remove the
+# `disk:` block), the filesystem is ephemeral. The app stays fully functional
+# because seedIfEmpty re-seeds 500 trades whenever the `trades` table is empty
+# on startup — but user-created trades do NOT survive a restart. That tradeoff
+# is acceptable for a demo/assessment deployment.
+
+services:
+  # ---- Backend: Docker web service (persistent process + WebSocket upgrades) --
+  - type: web
+    name: trade-blotter-backend
+    env: docker
+    plan: starter                 # smallest paid plan that allows a persistent disk
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /api/v1/trades
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # PORT is injected by Render; server.ts reads it from process.env and
+      # binds 0.0.0.0:$PORT. Do not hardcode 3000 here — let the platform set it.
+      - key: PORT
+        value: 3000
+      # SQLite lives on the mounted persistent disk below so data survives
+      # restarts/redeploys. For the ephemeral fallback, remove the `disk:` block
+      # and this path simply lives on the ephemeral FS (re-seeded when empty).
+      - key: DB_PATH
+        value: /data/trades.db
+      # Same-origin in the single-service model, so CORS is not exercised by the
+      # SPA. Set to the public app URL if the frontend is served from a
+      # different origin (option B).
+      - key: CORS_ORIGIN
+        value: "*"
+    disk:
+      name: trade-blotter-data
+      mountPath: /data            # DB_PATH (/data/trades.db) lives on this disk
+      sizeGB: 1
+
+  # ---- Option B (reference only): separate nginx frontend service ------------
+  # Uncomment and adapt if serving the frontend from its own service instead of
+  # same-origin. The frontend build needs no VITE_* values (URLs resolve at
+  # runtime), but the platform/router MUST forward /api and /ws to the backend
+  # origin, and nginx.conf's `proxy_pass http://backend:3000` must be changed to
+  # the backend's internal Render address for this to work off the Compose network.
+  #
+  # - type: web
+  #   name: trade-blotter-frontend
+  #   env: docker
+  #   plan: starter
+  #   dockerfilePath: ./frontend/Dockerfile
+  #   dockerContext: ./frontend

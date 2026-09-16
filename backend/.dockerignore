@@ -1,0 +1,25 @@
+# Dependencies and build output are reinstalled/rebuilt inside the image
+node_modules
+dist
+coverage
+
+# SQLite database files — the DB is created at runtime and persisted via a
+# mounted volume; never bake a local dev DB into the image
+data/*.db
+data/*.db-wal
+data/*.db-shm
+
+# Tests and test config are not needed in the runtime image
+**/*.test.ts
+**/*.spec.ts
+vitest.config.ts
+
+# VCS and editor noise
+.git
+.gitignore
+*.log
+.DS_Store
+
+# Docker artifacts
+Dockerfile
+.dockerignore

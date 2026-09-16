@@ -1,0 +1,45 @@
+# Trade Blotter - local orchestration.
+#
+# Single command to start the entire application from the repository root:
+#
+#     docker compose up --build
+#
+# After the images build and the containers start:
+#   - Frontend (nginx SPA):  http://localhost:80
+#   - Backend REST API:      http://localhost:3000/api/v1
+#   - WebSocket endpoint:    ws://localhost:3000/ws
+#
+# The frontend is served same-origin behind nginx, which proxies /api and /ws
+# to the `backend` service (see frontend/nginx.conf). Because the SPA resolves
+# its API and WebSocket URLs at runtime via config/env.ts, no VITE_* build args
+# are needed - the same frontend image works for local Docker and hosted use.
+
+services:
+  backend:
+    # Multi-stage Node build (backend/Dockerfile) - compiles TypeScript and
+    # runs the compiled output on node:20-alpine.
+    build: ./backend
+    ports:
+      - "3000:3000"
+    volumes:
+      # Persist the SQLite database on the host so trades survive container
+      # restarts. DB_PATH below points inside this mounted directory.
+      - ./backend/data:/app/data
+    environment:
+      - NODE_ENV=production
+      - DB_PATH=/app/data/trades.db
+      - PORT=3000
+      # CORS is not strictly required when the frontend is same-origin behind
+      # nginx, but it is set explicitly for clarity and for any direct
+      # browser-to-:3000 access during local development.
+      - CORS_ORIGIN=http://localhost:80
+
+  frontend:
+    # Multi-stage build (frontend/Dockerfile) - builds the Vite app and serves
+    # the static output via nginx, which also reverse-proxies /api and /ws to
+    # the backend service on the internal Docker network.
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
