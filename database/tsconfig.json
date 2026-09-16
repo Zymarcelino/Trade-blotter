@@ -14,13 +14,11 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "declaration": true,
+    "declarationMap": true,
     "sourceMap": true,
     "types": ["node"]
   },
-  "references": [
-    { "path": "../shared" },
-    { "path": "../database" }
-  ],
+  "references": [{ "path": "../shared" }],
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]
 }

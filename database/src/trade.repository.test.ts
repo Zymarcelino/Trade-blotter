@@ -10,7 +10,7 @@ import {
   createTradeId,
   type AuditInsert,
   type NewTrade,
-} from '../types/trade.types';
+} from '@trade-blotter/shared';
 
 function newTrade(over: Partial<NewTrade> = {}): NewTrade {
   return {

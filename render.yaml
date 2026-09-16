@@ -32,7 +32,7 @@ services:
     env: docker
     plan: starter
     dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    dockerContext: .
     healthCheckPath: /api/v1/trades
     envVars:
       - key: NODE_ENV

@@ -6,10 +6,7 @@
  */
 import { createServer, type Server as HttpServer } from 'node:http';
 
-import { createConnection } from './db/connection';
-import { runMigrations } from './db/migrations';
-import { seedIfEmpty } from './db/seed';
-import { TradeRepository } from './db/trade.repository';
+import { createConnection, runMigrations, seedIfEmpty, TradeRepository } from '@trade-blotter/database';
 import { TradeService } from './services/trade.service';
 import { attachWebSocketServer } from './websocket/server';
 import { computeVwap, PriceFeed, startPriceFeed } from './marketdata/priceFeed';

@@ -22,7 +22,8 @@ The hosted services may sleep when idle; the first request wakes them (about 30-
 - **Native WebSockets (ws) over Socket.IO / SSE** - the requirement is JSON broadcast to all clients; native `ws` + the browser `WebSocket` API meets it with no extra protocol layer. The client reconnects with bounded exponential backoff.
 - **TanStack Table (+ Virtual) over AG Grid** - headless and semantic, so the grid markup stays accessible and controllable; virtualization handles large sets.
 - **Zustand over Redux** - small global trade state with simple update patterns; server state stays in TanStack Query, and WebSocket updates patch the store directly.
-- **Layered architecture** - routes to service to repository to db, wired only in a single composition root (`backend/src/server.ts`). No SQL leaves the `db/` layer; no business logic lives in routes.
+- **Layered architecture** - routes to service to repository to db, wired only in a single composition root (`backend/src/server.ts`). No SQL leaves the persistence layer; no business logic lives in routes.
+- **Multi-package layout** - the persistence layer is a standalone top-level `database/` package (`@trade-blotter/database`), and the domain types/interfaces it shares with the backend live in `shared/` (`@trade-blotter/shared`). The backend consumes both via TypeScript project references. This makes the database layer an explicit, independently testable deliverable and keeps a clean one-directional dependency (`shared <- database <- backend`) with no import cycle. Trade-off: a small monorepo (three `tsconfig`s, a repo-root Docker build context) instead of a single backend package.
 - **Commit-then-broadcast** - a mutation is persisted first, then broadcast as a post-commit side effect. A failed broadcast is logged, never rolled back; the originating client updates from the broadcast (not the HTTP response), so all clients follow one code path.
 
 ## 2. Project structure
@@ -34,11 +35,13 @@ The hosted services may sleep when idle; the first request wakes them (about 30-
   render.yaml               hosted deployment blueprint (two services)
   AI-USAGE-REPORT.md        how AI tools were used
   PROMPT-LOG.md             representative prompts + outcomes
-  database/                 schema.sql + seed.sql + pointer to the DB layer (SQLite is embedded)
-  backend/                  Fastify + SQLite + WebSocket API
+  shared/                   @trade-blotter/shared - domain types, repo interface, id gen (source of truth)
+  database/                 @trade-blotter/database - the SQLite persistence layer (all SQL)
+    src/                    connection, migrations, seed, trade.repository (+ co-located tests)
+    schema.sql, seed.sql    standalone DDL + seed reference
+  backend/                  Fastify + WebSocket API (depends on shared + database)
     src/routes/             HTTP handlers (HTTP only)
     src/services/           business logic
-    src/db/                 connection, migrations, seed, repository (all SQL)
     src/websocket/          WS server + broadcast fan-out
     src/marketdata/         simulated price feed (VWAP-seeded)
     src/types/              domain types + interfaces
@@ -57,7 +60,7 @@ The hosted services may sleep when idle; the first request wakes them (about 30-
     src/config/             env.ts (single source of API/WS URL resolution)
 ```
 
-The `database/` directory documents where the database layer lives (`backend/src/db/`) and includes the schema; SQLite is an embedded file, not a separate service. See `database/README.md`.
+The `database/` package IS the SQLite persistence layer (`connection`, `migrations`, `seed`, `trade.repository`). It depends only on `@trade-blotter/shared` and is consumed by the backend via TypeScript project references. SQLite is an embedded file, not a separate service. See `database/README.md`.
 
 ## 3. Prerequisites
 
@@ -84,7 +87,13 @@ The frontend nginx serves the SPA and proxies `/api` and `/ws` to the backend, s
 
 ### Option B - run each package directly (no Docker)
 
+The backend depends on two local packages (`shared/`, `database/`) via TypeScript project references, so install and build those first.
+
 ```bash
+# One-time: install + build the shared and database packages first
+cd shared    && npm install && npm run build && cd ..
+cd database  && npm install && npm run build && cd ..
+
 # Terminal 1 - backend on http://localhost:3000
 cd backend
 npm install
@@ -105,7 +114,11 @@ In this split-origin dev setup, `frontend/.env.development` points Vite at the b
 ## 5. Running tests
 
 ```bash
-# Backend (Vitest + fast-check; DB tests use in-memory SQLite)
+# Database package (Vitest + fast-check; against real in-memory SQLite)
+cd database
+npm test
+
+# Backend (Vitest + fast-check; service / routes / websocket / app)
 cd backend
 npm test
 npm run test:coverage
@@ -116,7 +129,7 @@ npm test
 npm run test:coverage
 ```
 
-Both suites include property-based tests (fast-check) for logic with large input spaces (id generation, diffing, pagination, filtering, validation, position math).
+All three suites include property-based tests (fast-check) for logic with large input spaces (id generation, row mapping, diffing, pagination, filtering, validation, position math). The SQLite repository properties live in the `database` package; the service/route/websocket tests live in `backend`.
 
 ## 6. API reference (summary)
 

@@ -1,54 +1,72 @@
-# Database
+# Database (`@trade-blotter/database`)
 
-The brief lists `database/` as a top-level deliverable. This project uses **SQLite**
-(via `better-sqlite3`), which is a single embedded file rather than a separate
-database service - so the database layer lives inside the backend rather than as its
-own deployable. This directory contains the standalone schema and seed reference for
-that database, and points to where the executable code lives.
+The brief lists `database/` as a top-level deliverable, and it is: a standalone
+TypeScript package that owns the entire SQLite persistence layer. It depends only
+on `@trade-blotter/shared` (domain types + the repository interface) and is consumed
+by the backend through TypeScript project references. This is the ONLY place SQL runs
+or where `snake_case` row shapes exist.
 
-## Files in this directory
+The database engine is **SQLite** (via `better-sqlite3`) - a single embedded file, not
+a separate service - so there is no DB server to deploy; the schema is created and
+seeded automatically on backend startup.
 
-| File | Purpose |
-|------|---------|
-| `schema.sql` | Canonical DDL (tables, CHECK constraints, indexes). Mirrors the idempotent startup migrations. |
-| `seed.sql` | Documents the 500-row seed the app generates on first startup, plus a small illustrative `INSERT` you can run by hand. |
-| `README.md` | This file. |
+## Package contents
 
-You can create an empty database by hand with:
-
-```
-sqlite3 trades.db < database/schema.sql
-sqlite3 trades.db < database/seed.sql   # optional illustrative rows
-```
-
-The application does this for you automatically on startup - you do not need to run
-these by hand to use the app.
-
-## Where the database code lives
-
-`backend/src/db/`:
-
-| File | Responsibility |
+| Path | Responsibility |
 |------|----------------|
-| `connection.ts` | Opens the `better-sqlite3` connection and enables WAL mode. |
-| `migrations.ts` | Creates the `trades` and `trade_audit` tables and the filter indexes (idempotent, run on startup). |
-| `seed.ts` | Seeds 500 realistic trades when the `trades` table is empty. |
-| `trade.repository.ts` | The only place SQL runs; maps snake_case rows to the camelCase domain model. |
+| `src/connection.ts` | Opens the `better-sqlite3` connection and enables WAL mode. |
+| `src/migrations.ts` | Creates the `trades` and `trade_audit` tables and filter indexes (idempotent, run on startup). |
+| `src/seed.ts` | Seeds 500 realistic trades when the `trades` table is empty (no-op otherwise). |
+| `src/trade.repository.ts` | `ITradeRepository` implementation. Maps `snake_case` rows to the camelCase domain model; multi-table writes run in one transaction. |
+| `src/index.ts` | Public surface: `createConnection`, `runMigrations`, `seedIfEmpty`, `TradeRepository`, seed constants. |
+| `schema.sql` | Canonical DDL (tables, CHECK constraints, indexes). Mirrors `migrations.ts`. |
+| `seed.sql` | Documents the 500-row seed plus a small illustrative `INSERT`. |
 
-Tests for the DB layer (against a real in-memory SQLite instance) are co-located:
-`connection.test.ts`, `migrations.test.ts`, `seed.test.ts`, `trade.repository.test.ts`.
+Tests (against a real in-memory SQLite instance, incl. fast-check property tests) are
+co-located: `src/connection.test.ts`, `src/migrations.test.ts`, `src/seed.test.ts`,
+`src/trade.repository.test.ts`.
+
+## How it is consumed
+
+The backend imports the package, never the files directly:
+
+```ts
+import { createConnection, runMigrations, seedIfEmpty, TradeRepository } from '@trade-blotter/database';
+```
+
+Concrete classes are wired to their interfaces only in the backend composition root
+(`backend/src/server.ts`), preserving the `routes -> service -> repository -> db`
+layering.
+
+## Build and test
+
+```bash
+cd database
+npm install
+npm run build   # tsc -b (builds @trade-blotter/shared first via project references)
+npm test        # vitest run
+```
+
+## Create a database by hand (optional)
+
+```
+sqlite3 trades.db < schema.sql
+sqlite3 trades.db < seed.sql   # optional illustrative rows
+```
+
+You do not need to do this to run the app - the backend creates and seeds the DB on
+startup.
 
 ## Where the database file lives at runtime
 
 - **Local (npm)**: `backend/data/trades.db` (created on first run).
-- **Docker Compose**: persisted to the host via the `./backend/data:/app/data` volume
-  (`DB_PATH=/app/data/trades.db`).
-- **Hosted (Render)**: a persistent disk mounted at `DB_PATH`; without a disk the file
-  is ephemeral and the app re-seeds 500 trades on each empty startup (a documented
-  demo trade-off).
+- **Docker Compose**: persisted to the host via the `./backend/data:/repo/backend/data`
+  volume (`DB_PATH=/repo/backend/data/trades.db`).
+- **Hosted (Render)**: a persistent disk mounted at `DB_PATH` (`/data/trades.db`);
+  without a disk the file is ephemeral and the app re-seeds 500 trades on each empty
+  startup (a documented demo trade-off).
 
-The database file itself is not committed (it is generated + seeded on startup); see
-`.gitignore`.
+The database file itself is not committed (it is generated + seeded on startup).
 
 ## Schema
 

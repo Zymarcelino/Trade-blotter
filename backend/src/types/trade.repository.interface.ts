@@ -1,23 +1,5 @@
 /**
  * Repository contract for the trade domain (Dependency Inversion).
- * Implementations must be fully substitutable (Liskov). No `any`.
+ * Re-exported from `@trade-blotter/shared` (the cross-package source of truth).
  */
-import type {
-  AuditEntry,
-  AuditInsert,
-  NewTrade,
-  Trade,
-  TradeFilters,
-  TradeId,
-} from './trade.types';
-
-export interface ITradeRepository {
-  findAll(filters?: TradeFilters): Trade[];
-  findById(id: TradeId): Trade | null;
-  create(trade: NewTrade): Trade;
-  update(id: TradeId, fields: Partial<Trade>, auditEntries: AuditInsert[]): Trade;
-  cancel(id: TradeId): Trade;
-  findAuditHistory(tradeId: TradeId): AuditEntry[];
-  findAllAuditEntries(limit: number): AuditEntry[];
-  getActiveTrades(): Trade[];
-}
+export type { ITradeRepository } from '@trade-blotter/shared';

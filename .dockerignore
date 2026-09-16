@@ -1,0 +1,37 @@
+# Root-context .dockerignore for the backend image (build context = repo root).
+# Keeps the build context small and deterministic: sources for shared/,
+# database/, backend/ are copied by the Dockerfile; everything below is noise
+# or reinstalled/rebuilt inside the image.
+
+# Per-package dependencies and build output (reinstalled / recompiled in-image)
+**/node_modules
+**/dist
+**/coverage
+**/*.tsbuildinfo
+
+# SQLite database files - created at runtime, persisted via a mounted volume
+**/data/*.db
+**/data/*.db-wal
+**/data/*.db-shm
+
+# Tests and test config are not needed to produce the runtime artifact
+**/*.test.ts
+**/*.spec.ts
+**/vitest.config.ts
+
+# Packages / folders not part of the backend image
+frontend
+misc
+.kiro
+.github
+
+# VCS and editor noise
+.git
+.gitignore
+**/*.log
+.DS_Store
+Thumbs.db
+
+# Docker artifacts
+**/Dockerfile
+**/.dockerignore

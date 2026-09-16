@@ -6,8 +6,7 @@
  */
 import type Database from 'better-sqlite3';
 
-import { generateTradeId } from '../utils/idGenerator';
-import { TradeSide, TradeStatus } from '../types/trade.types';
+import { generateTradeId, TradeSide, TradeStatus } from '@trade-blotter/shared';
 
 const SEED_COUNT = 500;
 const SEED_START_SEQUENCE = 100001;

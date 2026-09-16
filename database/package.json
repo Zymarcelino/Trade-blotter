@@ -1,0 +1,25 @@
+{
+  "name": "@trade-blotter/database",
+  "version": "1.0.0",
+  "description": "SQLite persistence layer for the trade blotter: connection, migrations, seed, and the ITradeRepository implementation.",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@trade-blotter/shared": "file:../shared",
+    "better-sqlite3": "11.10.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "9.6.0",
+    "@types/node": "20.19.43",
+    "fast-check": "4.10.0",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  },
+  "license": "MIT"
+}

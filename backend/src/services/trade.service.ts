@@ -8,7 +8,7 @@ import type { ITradeRepository } from '../types/trade.repository.interface';
 import type { ITradeService } from '../types/trade.service.interface';
 import type { BroadcastFn } from '../websocket/broadcast';
 import { diffTrade } from '../utils/diffTrade';
-import { SEED_SYMBOLS, SEED_TRADERS, SEED_BOOKS, SEED_COUNTERPARTIES } from '../db/seed';
+import { SEED_SYMBOLS, SEED_TRADERS, SEED_BOOKS, SEED_COUNTERPARTIES } from '@trade-blotter/database';
 import {
   AppError,
   TRADE_ALREADY_CANCELLED,

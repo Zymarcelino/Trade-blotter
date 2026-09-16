@@ -2,9 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import Database from 'better-sqlite3';
 
 import { readConfig } from './server';
-import { runMigrations } from './db/migrations';
-import { seedIfEmpty } from './db/seed';
-import { TradeRepository } from './db/trade.repository';
+import { runMigrations, seedIfEmpty, TradeRepository } from '@trade-blotter/database';
 import { TradeService } from './services/trade.service';
 import { buildApp } from './app';
 import type { FastifyInstance } from 'fastify';

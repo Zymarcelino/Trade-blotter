@@ -4,18 +4,18 @@
  * model and never leaks row types. Multi-table writes run in one transaction.
  */
 import type Database from 'better-sqlite3';
-import type { ITradeRepository } from '../types/trade.repository.interface';
 import {
   createTradeId,
+  generateTradeId,
   TradeStatus,
   type AuditEntry,
   type AuditInsert,
+  type ITradeRepository,
   type NewTrade,
   type Trade,
   type TradeFilters,
   type TradeId,
-} from '../types/trade.types';
-import { generateTradeId } from '../utils/idGenerator';
+} from '@trade-blotter/shared';
 
 interface TradeRow {
   id: string;
