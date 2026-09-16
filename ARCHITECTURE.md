@@ -121,11 +121,9 @@ interactive during the stream.
 
 ## 4. Known gaps / what I would do next
 
-- **Backend unit tests are not currently in the repo.** The backend source was
-  reconstructed from compiled output after a file-loss incident; the co-located
-  `.test.ts` files (described in the spec, ~274 tests) were not recovered and would be
-  re-added next. The frontend suite (130 tests) is intact.
-- Add a CI workflow (lint + typecheck + tests on push).
+- Add a CI workflow (lint + typecheck + tests on push). Both suites are in place
+  (backend 68 tests, frontend 130 tests, both with property-based coverage); they are
+  currently run locally / in the Docker build rather than in CI.
 - Extract a shared types package (or OpenAPI-generated client) to remove the FE/BE
   type duplication.
 - Push pagination/filtering into SQL (keyset pagination) for very large datasets.

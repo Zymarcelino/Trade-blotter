@@ -15,7 +15,7 @@ published rubric: Engineering 30 / TypeScript 20 / Full-Stack 20 / UX 10 / Testi
 | TypeScript usage | 20% | Strong | Branded TradeId, discriminated-union WsMessage, Readonly domain, Omit/Partial DTOs, unknown+guards at boundaries, no any. |
 | Full-stack design | 20% | Strong | REST + WS split, envelope responses, soft-cancel status model, audit in one transaction, same-origin runtime URLs. |
 | UX | 10% | Strong | Loading/empty/error states, toasts, disabled submits, semantic a11y table, colour+text cues, dense reference-matched UI, live P&L. |
-| Testing | 10% | Mixed | Frontend 130 tests (incl. property-based). Backend test files are currently ABSENT after a source-recovery incident - see gap #1. |
+| Testing | 10% | Strong | Backend 68 tests (13 files, incl. property-based against in-memory SQLite + Fastify inject); frontend 130 tests (incl. property-based). |
 | Communication | 10% | Strong | README, ARCHITECTURE.md, AI-USAGE-REPORT.md, PROMPT-LOG(-HIGHLIGHTS).md all present. |
 
 All functional + non-functional requirements are met. Bonus features done: audit
@@ -26,12 +26,13 @@ bonus NOT done: User Authentication (deliberate, documented).
 
 ## 2. Gaps a reviewer will spot (be ready / fix)
 
-1. **Backend unit tests are not in the repo.** The backend `src` was reconstructed
-   from compiled Docker output after a file-loss incident; the co-located `.test.ts`
-   files (the spec describes ~274) were not recovered. The code compiles, runs, and is
-   exercised by the live app, but the backend suite is currently empty. *Answer:* be
-   upfront - the spec + property list document the intended coverage; re-adding the
-   backend tests is the top follow-up. The frontend suite (130) is intact.
+1. **Test suites are present on both sides.** Backend 68 tests (13 files): utils,
+   db layer against real in-memory SQLite, service against a mocked repository +
+   broadcast, routes via Fastify `inject`, websocket ack/broadcast, the app error
+   handler, and an in-memory create->get->amend->cancel->audit smoke test - plus the
+   numbered property tests (1,2,3,6,8,9,10,11,14,15,18,4,5,7). Frontend 130 tests.
+   (These were re-authored after a file-loss incident that wiped the original
+   co-located tests; they match the current source and the spec's property list.)
 2. **`database/` deliverable naming.** The brief lists `database/` as a deliverable;
    ours lives in `backend/src/db/` (connection, migrations, seed, repository). SQLite
    is file-based so there is no separate DB service. Point to the README structure; a
@@ -121,12 +122,12 @@ the Figma reference on the required React + CSS Modules stack.
 
 - **Frontend:** 130 tests (Vitest + RTL + MSW), including fast-check property tests
   (e.g. positions net qty = sum BUY - sum SELL).
-- **Backend:** the intended coverage (services, repository against in-memory SQLite,
-  routes via Fastify inject, ~26 numbered properties) is documented in the spec, but
-  the test files are not currently in the repo after the recovery incident - the honest
-  top follow-up.
-- **Next:** re-add backend tests, add CI, add Playwright E2E for create -> live-update
-  -> cancel.
+- **Backend:** 68 tests across 13 files - service against a mocked repository +
+  broadcast, repository against real in-memory SQLite, routes via Fastify inject, the
+  app error handler, websocket ack/broadcast, and an in-memory round-trip smoke test,
+  with fast-check property tests for the numbered correctness properties.
+- **Next:** add CI (lint + typecheck + both suites on push) and Playwright E2E for the
+  create -> live-update -> cancel flow.
 
 ---
 
@@ -138,7 +139,7 @@ data). Recovery: backend restored from the compiled Docker output (runnable `dis
 TypeScript source reconstructed from the emitted `.js`/`.d.ts`), frontend source and
 the original CSS recovered from the compiled stylesheet, specs and steering
 regenerated, all under version control now. It is documented honestly in the prompt
-log; the one lasting gap is the backend test files.
+log; the backend tests have since been re-authored (68 tests).
 
 ---
 
@@ -150,6 +151,6 @@ log; the one lasting gap is the backend test files.
 - **Biggest strength:** "Clean layering behind interfaces - SQL never leaves the db
   layer, business rules never leave the service, and the composition root is the only
   place that knows concrete classes."
-- **Biggest gap:** "Backend test files were lost in a recovery incident and need
-  re-adding - documented honestly; the frontend suite and the spec's property list are
-  intact."
+- **Biggest gap:** "No CI yet and no browser E2E - both are small adds; the unit +
+  integration suites (backend 68, frontend 130) and the spec's property list are in
+  place."
