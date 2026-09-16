@@ -1,0 +1,73 @@
+/* Add-random-trades dialog form. */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  max-width: 420px;
+}
+
+.hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.required {
+  color: var(--sell);
+}
+
+.input {
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-bright);
+  background-color: var(--panel);
+  color: var(--text);
+}
+
+.error,
+.serverError {
+  margin: 0;
+  color: var(--sell);
+  font-size: 12px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.cancel,
+.submit {
+  padding: 8px 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-bright);
+  background-color: var(--panel);
+  color: var(--text);
+}
+
+.submit {
+  border-color: var(--accent);
+  background-color: rgba(41, 182, 246, 0.16);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.cancel:disabled,
+.submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

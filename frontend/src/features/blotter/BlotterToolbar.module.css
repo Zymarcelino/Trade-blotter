@@ -1,0 +1,98 @@
+/* Toolbar above the grid: search, filters, page size, stream dials, actions. */
+
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  background-color: var(--surface);
+}
+
+.controls {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.field label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.field input,
+.field select {
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-bright);
+  background-color: var(--panel);
+  color: var(--text);
+}
+
+.sliderField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 120px;
+}
+
+.sliderField label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.sliderValue {
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
+
+.filterToggle,
+.sortToggle,
+.pauseButton,
+.createButton,
+.randomButton,
+.clearButton {
+  padding: 7px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-bright);
+  background-color: var(--panel);
+  color: var(--text);
+}
+
+.filterToggleActive,
+.pauseButtonActive {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.createButton {
+  border-color: var(--accent);
+  background-color: rgba(41, 182, 246, 0.14);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.randomButton {
+  color: var(--text-muted);
+}
+
+.clearButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.filterBar {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--border);
+}

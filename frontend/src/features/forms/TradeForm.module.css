@@ -1,0 +1,123 @@
+/* Shared create/amend trade form: two-column grid, segmented side toggle. */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-4);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.field,
+.fieldWide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.fieldWide {
+  grid-column: 1 / -1;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.required {
+  color: var(--sell);
+}
+
+.input {
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-bright);
+  background-color: var(--panel);
+  color: var(--text);
+}
+
+.select {
+  appearance: auto;
+}
+
+.inputError {
+  border-color: var(--sell);
+}
+
+.error {
+  margin: 2px 0 0;
+  color: var(--sell);
+  font-size: 12px;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.segment {
+  padding: 8px 18px;
+  background-color: var(--panel);
+  border: none;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.segmentBuy {
+  background-color: rgba(0, 230, 118, 0.16);
+  color: var(--buy);
+}
+
+.segmentSell {
+  background-color: rgba(255, 69, 96, 0.16);
+  color: var(--sell);
+}
+
+.conflict {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  background-color: rgba(255, 193, 7, 0.14);
+  color: var(--amber);
+  font-size: 13px;
+}
+
+.divider {
+  height: 1px;
+  background-color: var(--border);
+  margin: var(--space-4) 0;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.cancel,
+.submit {
+  padding: 8px 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-bright);
+  background-color: var(--panel);
+  color: var(--text);
+}
+
+.submit {
+  border-color: var(--accent);
+  background-color: rgba(41, 182, 246, 0.16);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.cancel:disabled,
+.submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

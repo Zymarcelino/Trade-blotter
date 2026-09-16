@@ -1,0 +1,54 @@
+/* Cancel-confirmation dialog body. */
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  max-width: 420px;
+}
+
+.lead {
+  margin: 0;
+  font-size: 15px;
+}
+
+.tradeId {
+  font-family: var(--font-mono);
+  color: var(--accent);
+}
+
+.detail {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.keep,
+.confirm {
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-bright);
+  background-color: var(--panel);
+  color: var(--text);
+}
+
+/* Destructive action: conveyed by BOTH the word "Cancel" and colour. */
+.confirm {
+  border-color: var(--sell);
+  background-color: rgba(255, 69, 96, 0.14);
+  color: var(--sell);
+  font-weight: 600;
+}
+
+.keep:disabled,
+.confirm:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

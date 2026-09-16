@@ -1,0 +1,38 @@
+/* Full-page error fallback. */
+
+.fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: var(--bg);
+  padding: var(--space-5);
+}
+
+.panel {
+  text-align: center;
+  max-width: 420px;
+  padding: var(--space-5);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+}
+
+.title {
+  font-size: 20px;
+  margin-bottom: var(--space-3);
+}
+
+.message {
+  color: var(--text-muted);
+  margin-bottom: var(--space-4);
+}
+
+.reloadButton {
+  padding: 8px 20px;
+  border-radius: var(--radius);
+  border: 1px solid var(--accent);
+  background-color: rgba(41, 182, 246, 0.14);
+  color: var(--accent);
+  font-weight: 600;
+}

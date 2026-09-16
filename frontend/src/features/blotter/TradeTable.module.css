@@ -1,0 +1,144 @@
+/* Blotter grid container + table + pagination/footer chrome. */
+
+.blotter {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.errorBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  background-color: rgba(255, 69, 96, 0.12);
+  color: var(--sell);
+  border-bottom: 1px solid var(--border);
+}
+
+.errorBanner button {
+  padding: 4px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--sell);
+  background: none;
+  color: var(--sell);
+}
+
+.tableWrapper {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.loadingOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(8, 11, 14, 0.6);
+  color: var(--text-muted);
+  z-index: 2;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--border-bright);
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.actionsHeader {
+  text-align: right;
+}
+
+.sortButton {
+  background: none;
+  border: none;
+  color: inherit;
+  font-weight: inherit;
+  padding: 0;
+}
+
+.emptyState {
+  padding: var(--space-5);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.stickyBottom {
+  border-top: 1px solid var(--border);
+  background-color: var(--surface);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-4);
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.pageControls {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.pageControls button {
+  padding: 4px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-bright);
+  background-color: var(--panel);
+  color: var(--text);
+}
+
+.pageControls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  font-family: var(--font-mono);
+}
+
+.footerShowing {
+  color: var(--text-muted);
+}
+
+.footerGroup {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.footerBuy {
+  color: var(--buy);
+}
+
+.footerSell {
+  color: var(--sell);
+}
+
+.footerNet {
+  color: var(--text);
+}

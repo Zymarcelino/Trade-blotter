@@ -1,0 +1,29 @@
+/* Connection status banner: colour + text (never colour alone). */
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.disconnected {
+  background-color: rgba(255, 69, 96, 0.16);
+  color: var(--sell);
+  border-bottom: 1px solid var(--sell);
+}
+
+.connected {
+  background-color: rgba(0, 230, 118, 0.14);
+  color: var(--buy);
+  border-bottom: 1px solid var(--buy);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: currentColor;
+}

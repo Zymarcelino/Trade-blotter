@@ -1,0 +1,102 @@
+/* A single blotter row. */
+
+.row {
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+
+.row:hover {
+  background-color: var(--panel);
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.row td {
+  padding: var(--space-2) var(--space-3);
+  white-space: nowrap;
+}
+
+/*
+ * CANCELLED rows are de-emphasised with BOTH reduced opacity AND strikethrough,
+ * so state is never conveyed by colour alone (Property 20).
+ */
+.cancelled {
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+
+.strong {
+  font-family: var(--font-mono);
+  color: var(--text);
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.timeCell {
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.activePill {
+  background-color: rgba(41, 182, 246, 0.12);
+  color: var(--accent);
+}
+
+.cancelledPill {
+  background-color: rgba(88, 106, 126, 0.15);
+  color: var(--text-muted);
+}
+
+.buyPill {
+  background-color: rgba(0, 230, 118, 0.12);
+  color: var(--buy);
+}
+
+.sellPill {
+  background-color: rgba(255, 69, 96, 0.12);
+  color: var(--sell);
+}
+
+.actions {
+  text-align: right;
+}
+
+.actionGroup {
+  display: inline-flex;
+  gap: var(--space-2);
+}
+
+.amend,
+.cancel {
+  padding: 4px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-bright);
+  background-color: var(--panel);
+  color: var(--text);
+  font-size: 12px;
+}
+
+.amend:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.cancel:hover {
+  border-color: var(--sell);
+  color: var(--sell);
+}
