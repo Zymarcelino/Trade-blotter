@@ -54,7 +54,15 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
     ...(serverFactory ? { serverFactory: serverFactory as never } : {}),
   });
 
-  await app.register(cors, { origin: process.env.CORS_ORIGIN ?? '*' });
+  // Explicitly allow the methods the API uses. @fastify/cors defaults to only
+  // GET,HEAD,POST, which would make the browser block the PATCH (amend) and
+  // DELETE (cancel) CORS preflights when the SPA is served from a different
+  // origin (e.g. the hosted frontend calling the hosted backend).
+  await app.register(cors, {
+    origin: process.env.CORS_ORIGIN ?? '*',
+    methods: ['GET', 'HEAD', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type'],
+  });
 
   app.setErrorHandler((error: unknown, _request, reply) => {
     if (error instanceof AppError) {
