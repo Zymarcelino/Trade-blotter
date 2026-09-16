@@ -97,12 +97,13 @@ const columns: ColumnDef<typeof blotterFeatures, Readonly<Trade>>[] = [
   // Column order: Time, Status, Symbol, Side, Price, Quantity, Book, Counterparty.
   // (Trade ID and Trader columns were removed; the id still exists on the trade
   // object for row keys and action aria-labels, it is simply not shown.)
-  // The dropdown-filtered columns use exact string equality (a dropdown picks a
-  // single whole value), while the rest rely on the global text filter only.
+  // Symbol and Side use case-insensitive SUBSTRING match (free-text filters);
+  // Status uses exact equality (dropdown picks one whole value). Numeric columns
+  // use range filters; the rest rely on the global text filter only.
   { id: 'tradeDate', accessorKey: 'tradeDate', header: 'Time' },
   { id: 'status', accessorKey: 'status', header: 'Status', filterFn: 'equalsString' },
-  { id: 'symbol', accessorKey: 'symbol', header: 'Symbol', filterFn: 'equalsString' },
-  { id: 'side', accessorKey: 'side', header: 'Side', filterFn: 'equalsString' },
+  { id: 'symbol', accessorKey: 'symbol', header: 'Symbol', filterFn: 'includesString' },
+  { id: 'side', accessorKey: 'side', header: 'Side', filterFn: 'includesString' },
   { id: 'price', accessorKey: 'price', header: 'Price', filterFn: 'inNumberRange' },
   { id: 'quantity', accessorKey: 'quantity', header: 'Quantity', filterFn: 'inNumberRange' },
   { id: 'book', accessorKey: 'book', header: 'Book' },

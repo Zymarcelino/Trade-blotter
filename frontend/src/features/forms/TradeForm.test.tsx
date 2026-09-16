@@ -36,10 +36,10 @@ async function fillValid(user: ReturnType<typeof userEvent.setup>): Promise<void
   await user.type(screen.getByLabelText(/price/i), '150.25');
   // Side is a segmented toggle - click the BUY button.
   await user.click(screen.getByRole('button', { name: 'BUY' }));
-  // Trader / Book / Counterparty are dropdowns of mock desk data.
-  await user.selectOptions(screen.getByLabelText(/trader/i), 'JSMITH');
-  await user.selectOptions(screen.getByLabelText(/book/i), 'EQUITIES_US');
-  await user.selectOptions(screen.getByLabelText(/counterparty/i), 'Goldman Sachs');
+  // Trader / Book / Counterparty are free-text inputs (open-ended desk data).
+  await user.type(screen.getByLabelText(/trader/i), 'JSMITH');
+  await user.type(screen.getByLabelText(/book/i), 'EQUITIES_US');
+  await user.type(screen.getByLabelText(/counterparty/i), 'Goldman Sachs');
 }
 
 describe('TradeForm — create mode validation', () => {
@@ -204,12 +204,9 @@ describe('TradeForm — property based', () => {
           await user.type(screen.getByLabelText(/quantity/i), '100');
           await user.type(screen.getByLabelText(/price/i), '150.25');
           await user.click(screen.getByRole('button', { name: 'BUY' }));
-          await user.selectOptions(screen.getByLabelText(/trader/i), 'JSMITH');
-          await user.selectOptions(screen.getByLabelText(/book/i), 'EQUITIES_US');
-          await user.selectOptions(
-            screen.getByLabelText(/counterparty/i),
-            'Goldman Sachs',
-          );
+          await user.type(screen.getByLabelText(/trader/i), 'JSMITH');
+          await user.type(screen.getByLabelText(/book/i), 'EQUITIES_US');
+          await user.type(screen.getByLabelText(/counterparty/i), 'Goldman Sachs');
           if (blank.trim() !== '') {
             await user.type(screen.getByLabelText(/symbol/i), blank);
           }

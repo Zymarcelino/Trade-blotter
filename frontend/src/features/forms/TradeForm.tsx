@@ -4,8 +4,9 @@
  * A single presentational form used by both {@link CreateTradeModal} and
  * {@link AmendTradeModal}, laid out as a two-column grid: Symbol | Side,
  * Quantity | Price, Trader | Book, then a full-width Counterparty (and Status
- * on amend). Side is a segmented BUY/SELL toggle; Trader, Book and Counterparty
- * are dropdowns populated from mock desk data ({@link formOptions}).
+ * on amend). Side is a segmented BUY/SELL toggle; Symbol, Trader, Book and
+ * Counterparty are free-text inputs (values are open-ended desk data, so a fixed
+ * dropdown would blank out any trade whose value is not on the list).
  *
  * Validation and accessibility follow the frontend and ux-best-practices
  * steering:
@@ -33,11 +34,6 @@ import {
   type AmendTradeFormValues,
   type CreateTradeFormValues,
 } from '../../utils/tradeSchema';
-import {
-  BOOK_OPTIONS,
-  COUNTERPARTY_OPTIONS,
-  TRADER_OPTIONS,
-} from './formOptions';
 import styles from './TradeForm.module.css';
 
 /** Which flavour of the form to render. */
@@ -147,15 +143,16 @@ export function TradeForm({
 
   /** Renders a labelled text input field. */
   function textField(
-    name: 'symbol' | 'quantity' | 'price',
+    name: 'symbol' | 'quantity' | 'price' | 'trader' | 'book' | 'counterparty',
     label: string,
     placeholder: string,
     type: 'text' | 'number',
     step?: string,
+    fullWidth = false,
   ): React.JSX.Element {
     const message = errs[name]?.message;
     return (
-      <div className={styles.field}>
+      <div className={fullWidth ? styles.fieldWide : styles.field}>
         <label className={styles.label} htmlFor={name}>
           {label}
           {requiredMark()}
@@ -169,39 +166,6 @@ export function TradeForm({
           {...register(name as keyof TradeFormValues)}
           {...fieldAria(name, Boolean(message))}
         />
-        {fieldError(name, message)}
-      </div>
-    );
-  }
-
-  /** Renders a labelled dropdown field from a list of string options. */
-  function selectField(
-    name: 'trader' | 'book' | 'counterparty',
-    label: string,
-    placeholder: string,
-    options: readonly string[],
-    fullWidth = false,
-  ): React.JSX.Element {
-    const message = errs[name]?.message;
-    return (
-      <div className={fullWidth ? styles.fieldWide : styles.field}>
-        <label className={styles.label} htmlFor={name}>
-          {label}
-          {requiredMark()}
-        </label>
-        <select
-          id={name}
-          className={`${styles.input} ${styles.select} ${message ? styles.inputError : ''}`}
-          {...register(name as keyof TradeFormValues)}
-          {...fieldAria(name, Boolean(message))}
-        >
-          <option value="">{placeholder}</option>
-          {options.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
         {fieldError(name, message)}
       </div>
     );
@@ -250,18 +214,12 @@ export function TradeForm({
         {textField('quantity', 'Quantity', '1000', 'number')}
         {textField('price', 'Price', '227.45', 'number', '0.01')}
 
-        {/* Row 3: Trader | Book */}
-        {selectField('trader', 'Trader', 'Select trader', TRADER_OPTIONS)}
-        {selectField('book', 'Book', 'Select book', BOOK_OPTIONS)}
+        {/* Row 3: Trader | Book (free text - open-ended desk data) */}
+        {textField('trader', 'Trader', 'JSMITH', 'text')}
+        {textField('book', 'Book', 'EQUITIES_UK', 'text')}
 
-        {/* Row 4: Counterparty (full width) */}
-        {selectField(
-          'counterparty',
-          'Counterparty',
-          'Select counterparty',
-          COUNTERPARTY_OPTIONS,
-          true,
-        )}
+        {/* Row 4: Counterparty (full width, free text) */}
+        {textField('counterparty', 'Counterparty', 'Goldman Sachs', 'text', undefined, true)}
 
         {/* Amend-only: Status (full width) */}
         {isAmend && (

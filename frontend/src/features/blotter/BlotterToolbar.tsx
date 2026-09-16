@@ -316,20 +316,20 @@ function BlotterToolbarComponent({
       {/* Collapsible inline filter bar (not a drawer) */}
       {showFilters && (
         <div id="blotter-filter-bar" className={styles.filterBar}>
-          <ColumnFilter
+          <TextFilter
             id="blotter-filter-symbol"
             label="Symbol"
             column="symbol"
+            placeholder="e.g. AAPL"
             value={columnFilters.symbol}
-            options={options.symbols}
             onChange={onColumnFilterChange}
           />
-          <ColumnFilter
+          <TextFilter
             id="blotter-filter-side"
             label="Side"
             column="side"
+            placeholder="BUY or SELL"
             value={columnFilters.side}
-            options={options.sides}
             onChange={onColumnFilterChange}
           />
           <ColumnFilter
@@ -407,6 +407,44 @@ function ColumnFilter({
           </option>
         ))}
       </select>
+    </div>
+  );
+}
+
+/** Props for a free-text substring filter (Symbol, Side). */
+interface TextFilterProps {
+  readonly id: string;
+  readonly label: string;
+  readonly column: FilterableColumn;
+  readonly value: string;
+  readonly placeholder: string;
+  readonly onChange: (column: FilterableColumn, value: string) => void;
+}
+
+/**
+ * A labelled free-text input that filters a column by case-insensitive
+ * substring. Used for open-ended / high-cardinality columns (Symbol) and
+ * small enums the user may prefer to type (Side); an empty value clears the
+ * filter. Trimmed so stray whitespace does not hide all rows.
+ */
+function TextFilter({
+  id,
+  label,
+  column,
+  value,
+  placeholder,
+  onChange,
+}: TextFilterProps): React.JSX.Element {
+  return (
+    <div className={styles.field}>
+      <label htmlFor={id}>{label}</label>
+      <input
+        id={id}
+        type="text"
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(column, e.target.value)}
+      />
     </div>
   );
 }

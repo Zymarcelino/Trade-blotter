@@ -11,7 +11,7 @@
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import type { UseAmendTradeResult } from '../../hooks/useAmendTrade';
@@ -23,6 +23,7 @@ vi.mock('../../hooks/useAmendTrade', () => ({
 
 import { useAmendTrade } from '../../hooks/useAmendTrade';
 import { AmendTradeModal } from './AmendTradeModal';
+import { VALIDATION_MESSAGES } from '../../utils/tradeSchema';
 import {
   TradeSide,
   TradeStatus,
@@ -123,5 +124,40 @@ describe('AmendTradeModal', () => {
     expect(
       within(dialog).getByText('This trade has been cancelled.'),
     ).toBeInTheDocument();
+  });
+
+  it('enforces validation: an invalid symbol shows the format error and does not submit', async () => {
+    const user = userEvent.setup();
+    const submit = vi.fn();
+    useAmendTradeMock.mockReturnValue(hookResult({ submit }));
+    render(<AmendTradeModal isOpen trade={trade} onClose={vi.fn()} />);
+
+    // Replace the pre-filled symbol with an invalid lowercase value.
+    const symbol = screen.getByLabelText(/symbol/i);
+    await user.clear(symbol);
+    await user.type(symbol, 'aapl');
+    await user.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() =>
+      expect(screen.getByText(VALIDATION_MESSAGES.symbolFormat)).toBeInTheDocument(),
+    );
+    expect(submit).not.toHaveBeenCalled();
+  });
+
+  it('enforces validation: a non-positive price shows the error and does not submit', async () => {
+    const user = userEvent.setup();
+    const submit = vi.fn();
+    useAmendTradeMock.mockReturnValue(hookResult({ submit }));
+    render(<AmendTradeModal isOpen trade={trade} onClose={vi.fn()} />);
+
+    const price = screen.getByLabelText(/price/i);
+    await user.clear(price);
+    await user.type(price, '0');
+    await user.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() =>
+      expect(screen.getByText(VALIDATION_MESSAGES.pricePositive)).toBeInTheDocument(),
+    );
+    expect(submit).not.toHaveBeenCalled();
   });
 });
