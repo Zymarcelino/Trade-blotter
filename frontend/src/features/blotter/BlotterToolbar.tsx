@@ -103,10 +103,6 @@ export interface BlotterToolbarProps {
   readonly streamPaused: boolean;
   /** Toggles the paused state. */
   readonly onStreamPausedToggle: () => void;
-  /** Number of rows matching the current filters (defaults to `totalCount`). */
-  readonly filteredCount?: number;
-  /** Total number of loaded trades (shown in the "{n} / {total}" count). */
-  readonly totalCount?: number;
   /** Re-runs the initial trade load (Refresh affordance); omit to hide it. */
   readonly onRefresh?: () => void;
   /** Whether a refresh/refetch is currently in flight (disables the control). */
@@ -132,8 +128,6 @@ export function BlotterToolbar({
   onStreamIntervalChange,
   streamPaused,
   onStreamPausedToggle,
-  filteredCount,
-  totalCount,
   onRefresh,
   isRefreshing = false,
 }: BlotterToolbarProps): React.JSX.Element {
@@ -169,24 +163,10 @@ export function BlotterToolbar({
     (v) => v !== '',
   ).length;
 
-  // Row count shown on the left of the toolbar. When the parent supplies both
-  // counts we show "{filtered} / {total}"; otherwise nothing is rendered.
-  const showCount = totalCount !== undefined;
-  const shownFiltered = filteredCount ?? totalCount ?? 0;
-
   return (
     <div className={styles.toolbar}>
       {/* Control row (desk stats live in the app top bar to avoid duplication) */}
       <div className={styles.controls}>
-        {showCount && (
-          <span className={styles.count} aria-live="polite">
-            <span className={styles.countValue}>{shownFiltered}</span>
-            <span className={styles.countSep}>/</span>
-            <span className={styles.countTotal}>{totalCount}</span>
-            <span className={styles.countLabel}>trades</span>
-          </span>
-        )}
-
         <div className={`${styles.field} ${styles.searchField}`}>
           <label htmlFor="blotter-global-filter">Search trades</label>
           <input

@@ -14,35 +14,6 @@
   gap: 0.6rem 0.75rem;
 }
 
-/* Left-aligned "{filtered} / {total} trades" count. */
-.count {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.3rem;
-  align-self: flex-end;
-  padding-bottom: 0.35rem;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-}
-
-.countValue {
-  color: var(--text);
-  font-weight: 600;
-}
-
-.countSep,
-.countTotal {
-  color: var(--text-dim);
-}
-
-.countLabel {
-  margin-left: 0.15rem;
-  font-size: 0.625rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
 .field {
   display: flex;
   flex-direction: column;

@@ -442,8 +442,6 @@ export function TradeTable({
         onStreamIntervalChange={setStreamIntervalMs}
         streamPaused={streamPaused}
         onStreamPausedToggle={() => setStreamPaused(!streamPaused)}
-        filteredCount={filteredCount}
-        totalCount={stats.totalCount}
         onRefresh={refetch}
         isRefreshing={isFetching}
       />
