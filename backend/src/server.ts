@@ -50,7 +50,12 @@ export async function start(): Promise<HttpServer> {
 
   const vwapPrices = computeVwap(repo.findAll());
   const priceFeed = new PriceFeed(vwapPrices);
-  const stopPriceFeed = startPriceFeed(broadcast, priceFeed);
+  // Reconcile the price feed's symbol set each tick against the current ACTIVE
+  // trades' VWAP, so a symbol introduced by a trade created after startup is
+  // seeded and starts drifting (rather than showing a static price).
+  const stopPriceFeed = startPriceFeed(broadcast, priceFeed, undefined, () =>
+    computeVwap(repo.getActiveTrades()),
+  );
 
   const app = await buildApp({
     service,

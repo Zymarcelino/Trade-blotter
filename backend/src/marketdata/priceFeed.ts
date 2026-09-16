@@ -39,6 +39,21 @@ export class PriceFeed {
     return { ...this.prices };
   }
 
+  /**
+   * Registers any symbols that are not yet tracked, seeding each from the given
+   * base price (typically the symbol's current VWAP). Symbols already tracked
+   * keep their live drifting price - this never overwrites an existing price.
+   * This is how a symbol introduced by a NEW trade after startup joins the feed
+   * and starts drifting, instead of showing a static price.
+   */
+  ensureSymbols(basePrices: Readonly<Record<string, number>>): void {
+    for (const [symbol, price] of Object.entries(basePrices)) {
+      if (this.prices[symbol] === undefined && Number.isFinite(price) && price > 0) {
+        this.prices[symbol] = Math.round(price * 100) / 100;
+      }
+    }
+  }
+
   tick(): Record<string, number> {
     for (const symbol of Object.keys(this.prices)) {
       const driftPct = (Math.random() - 0.5) * 0.4; // +/- 0.2%
@@ -49,13 +64,27 @@ export class PriceFeed {
   }
 }
 
-/** Starts the feed: ticks and broadcasts PRICE_TICK. Returns a stop function. */
+/**
+ * Starts the feed: on each tick it (optionally) reconciles the tracked symbol
+ * set against `reconcile()` - so symbols from trades created after startup are
+ * seeded and start drifting - then drifts all prices and broadcasts PRICE_TICK.
+ * Returns a stop function.
+ */
 export function startPriceFeed(
   broadcast: BroadcastFn,
   feed: PriceFeed,
   intervalMs: number = DEFAULT_PRICE_INTERVAL_MS,
+  reconcile?: () => Record<string, number>,
 ): () => void {
   const handle = setInterval(() => {
+    if (reconcile) {
+      try {
+        feed.ensureSymbols(reconcile());
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('PRICE_TICK symbol reconcile failed', error);
+      }
+    }
     const prices = feed.tick();
     try {
       broadcast({ type: 'PRICE_TICK', payload: prices });
